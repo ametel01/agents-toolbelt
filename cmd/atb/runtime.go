@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -32,6 +33,29 @@ type toolVerifier interface {
 	Check(context.Context, catalog.Tool) (verify.VerifyResult, error)
 }
 
+type progressManager struct {
+	action  plan.ActionType
+	index   int
+	manager pkgmgr.Manager
+	method  catalog.InstallMethod
+	stdout  io.Writer
+	tool    catalog.Tool
+	total   int
+}
+
+type reportingVerifier struct {
+	next   toolVerifier
+	stdout io.Writer
+}
+
+type installContext struct {
+	registry  catalog.Registry
+	stateData state.State
+	snapshot  discovery.Snapshot
+	managers  []pkgmgr.Manager
+	selected  []catalog.Tool
+}
+
 func (liveVerifier) Check(ctx context.Context, tool catalog.Tool) (verify.VerifyResult, error) {
 	result, err := verify.Check(ctx, tool, verify.ExecExecutor{})
 	if err != nil {
@@ -42,58 +66,86 @@ func (liveVerifier) Check(ctx context.Context, tool catalog.Tool) (verify.Verify
 }
 
 func runInstall(ctx context.Context, stdout, stderr io.Writer, yes bool) error {
-	registry, err := catalog.LoadRegistry()
+	installCtx, err := prepareInstall(stderr, yes)
 	if err != nil {
-		return wrapError("load catalog", err)
+		return err
 	}
 
-	managers := pkgmgr.DetectManagers()
-	if len(managers) == 0 {
-		return errNoSupportedPackageManagers
-	}
-
-	stateData, err := loadState(stderr)
-	if err != nil {
-		return wrapError("load state", err)
-	}
-
-	snapshot, err := buildSnapshot(registry, stateData)
-	if err != nil {
-		return wrapError("build discovery snapshot", err)
-	}
-
-	selected, err := selectTools(registry, snapshot, yes)
-	if err != nil {
-		return wrapError("select tools", err)
-	}
-
-	if len(selected) == 0 {
+	if len(installCtx.selected) == 0 {
 		_, writeErr := fmt.Fprintln(stdout, "No tools selected.")
 
 		return wrapError("write empty selection message", writeErr)
 	}
 
-	installPlan, err := plan.BuildInstallPlan(selected, snapshot, managers)
+	installPlan, err := plan.BuildInstallPlan(installCtx.selected, installCtx.snapshot, installCtx.managers)
 	if err != nil {
 		return wrapError("build install plan", err)
 	}
 
-	summary, err := plan.ExecuteInstallPlan(ctx, installPlan, &stateData, liveVerifier{})
+	if err := renderManagerInfo(stdout, installCtx.managers); err != nil {
+		return wrapError("write manager info", err)
+	}
+
+	if err := renderPlanPreview(stdout, "install", installPlan); err != nil {
+		return wrapError("write install plan preview", err)
+	}
+
+	summary, err := plan.ExecuteInstallPlan(
+		ctx,
+		withProgress(installPlan, stdout),
+		&installCtx.stateData,
+		reportingVerifier{next: liveVerifier{}, stdout: stdout},
+	)
 	if err != nil {
 		return wrapError("execute install plan", err)
 	}
 
-	if err := applyShellWorkflow(stdout, yes, &stateData, selected); err != nil {
+	if err := applyShellWorkflow(stdout, yes, &installCtx.stateData, installCtx.selected); err != nil {
 		return wrapError("apply shell workflow", err)
 	}
 
-	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}); err != nil {
-		return err
+	if err := persistVerifiedSkill(ctx, installCtx.registry, &installCtx.stateData, liveVerifier{}, stdout); err != nil {
+		return wrapError("persist verified skill", err)
 	}
 
 	renderSummary(stdout, "install", summary)
 
 	return nil
+}
+
+func prepareInstall(stderr io.Writer, yes bool) (installContext, error) {
+	registry, err := catalog.LoadRegistry()
+	if err != nil {
+		return installContext{}, wrapError("load catalog", err)
+	}
+
+	managers := pkgmgr.DetectManagers()
+	if len(managers) == 0 {
+		return installContext{}, errNoSupportedPackageManagers
+	}
+
+	stateData, err := loadState(stderr)
+	if err != nil {
+		return installContext{}, wrapError("load state", err)
+	}
+
+	snapshot, err := buildSnapshot(registry, stateData)
+	if err != nil {
+		return installContext{}, wrapError("build discovery snapshot", err)
+	}
+
+	selected, err := selectTools(registry, snapshot, yes)
+	if err != nil {
+		return installContext{}, wrapError("select tools", err)
+	}
+
+	return installContext{
+		registry:  registry,
+		stateData: stateData,
+		snapshot:  snapshot,
+		managers:  managers,
+		selected:  selected,
+	}, nil
 }
 
 func runStatus(stdout, stderr io.Writer) error {
@@ -210,22 +262,26 @@ func runUpdate(ctx context.Context, stdout, stderr io.Writer, toolID string) err
 		return wrapError("build update plan", err)
 	}
 
-	summary, err := plan.ExecuteUpdatePlan(ctx, updatePlan, &stateData, liveVerifier{})
+	if err := renderManagerInfo(stdout, managers); err != nil {
+		return wrapError("write manager info", err)
+	}
+
+	if err := renderPlanPreview(stdout, "update", updatePlan); err != nil {
+		return wrapError("write update plan preview", err)
+	}
+
+	summary, err := plan.ExecuteUpdatePlan(
+		ctx,
+		withProgress(updatePlan, stdout),
+		&stateData,
+		reportingVerifier{next: liveVerifier{}, stdout: stdout},
+	)
 	if err != nil {
 		return wrapError("execute update plan", err)
 	}
 
-	verified, err := refreshVerifiedTools(ctx, registry, &stateData, liveVerifier{})
-	if err != nil {
-		return wrapError("refresh verified tools", err)
-	}
-
-	if err := state.Save(stateData); err != nil {
-		return wrapError("save state", err)
-	}
-
-	if err := writeSkillFile(verified); err != nil {
-		return wrapError("write skill file", err)
+	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout); err != nil {
+		return wrapError("persist verified skill", err)
 	}
 
 	renderSummary(stdout, "update", summary)
@@ -259,22 +315,21 @@ func runUninstall(ctx context.Context, stdout, stderr io.Writer, toolIDs []strin
 		return wrapError("build uninstall plan", err)
 	}
 
-	summary, err := plan.ExecuteUninstallPlan(ctx, uninstallPlan, &stateData)
+	if err := renderManagerInfo(stdout, managers); err != nil {
+		return wrapError("write manager info", err)
+	}
+
+	if err := renderPlanPreview(stdout, "uninstall", uninstallPlan); err != nil {
+		return wrapError("write uninstall plan preview", err)
+	}
+
+	summary, err := plan.ExecuteUninstallPlan(ctx, withProgress(uninstallPlan, stdout), &stateData)
 	if err != nil {
 		return wrapError("execute uninstall plan", err)
 	}
 
-	verified, err := refreshVerifiedTools(ctx, registry, &stateData, liveVerifier{})
-	if err != nil {
-		return wrapError("refresh verified tools", err)
-	}
-
-	if err := state.Save(stateData); err != nil {
-		return wrapError("save state", err)
-	}
-
-	if err := writeSkillFile(verified); err != nil {
-		return wrapError("write skill file", err)
+	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout); err != nil {
+		return err
 	}
 
 	renderSummary(stdout, "uninstall", summary)
@@ -384,10 +439,21 @@ func persistVerifiedSkill(
 	registry catalog.Registry,
 	st *state.State,
 	verifier toolVerifier,
+	stdout io.Writer,
 ) error {
 	verified, err := refreshVerifiedTools(ctx, registry, st, verifier)
 	if err != nil {
 		return wrapError("refresh verified tools", err)
+	}
+
+	paths := skill.DefaultPaths()
+	if _, err := fmt.Fprintf(stdout, "Generating cli-tools skills for %d verified tools:\n", len(verified)); err != nil {
+		return wrapError("write skill generation header", err)
+	}
+	for _, path := range paths {
+		if _, err := fmt.Fprintf(stdout, "  - %s\n", path); err != nil {
+			return wrapError("write skill generation path", err)
+		}
 	}
 
 	if err := state.Save(*st); err != nil {
@@ -396,6 +462,13 @@ func persistVerifiedSkill(
 
 	if err := writeSkillFile(verified); err != nil {
 		return wrapError("write skill file", err)
+	}
+
+	if _, err := fmt.Fprintln(stdout, "Skill generation complete."); err != nil {
+		return wrapError("write skill generation footer", err)
+	}
+	if _, err := fmt.Fprintln(stdout); err != nil {
+		return wrapError("write skill generation spacing", err)
 	}
 
 	return nil
@@ -492,6 +565,219 @@ func renderSummary(stdout io.Writer, action string, summary plan.Summary) {
 			failed = append(failed, fmt.Sprintf("%s (%s)", item.ToolID, item.Error))
 		}
 		_, _ = fmt.Fprintf(stdout, "  failed: %s\n", strings.Join(failed, ", "))
+	}
+}
+
+func renderPlanPreview(stdout io.Writer, operation string, lifecyclePlan plan.Plan) error {
+	if _, err := fmt.Fprintf(stdout, "%s plan:\n", titleCase(operation)); err != nil {
+		return wrapError("write plan preview header", err)
+	}
+
+	for _, action := range lifecyclePlan.Actions {
+		if _, err := fmt.Fprintf(stdout, "  - %s\n", describeAction(action)); err != nil {
+			return wrapError("write plan preview action", err)
+		}
+	}
+
+	_, err := fmt.Fprintln(stdout)
+
+	return wrapError("write plan preview spacing", err)
+}
+
+func describeAction(action plan.Action) string {
+	name := actionLabel(action.Tool)
+	managerNote := methodNote(action.Method.Manager)
+
+	switch action.Type {
+	case plan.ActionInstall:
+		return fmt.Sprintf("install %s via %s%s", name, action.Method.Manager, managerNote)
+	case plan.ActionUpdate:
+		return fmt.Sprintf("update %s via %s%s", name, action.Method.Manager, managerNote)
+	case plan.ActionUninstall:
+		return fmt.Sprintf("uninstall %s via %s%s", name, action.Method.Manager, managerNote)
+	case plan.ActionAlreadyInstalled:
+		return fmt.Sprintf("skip %s (%s)", name, action.Reason)
+	case plan.ActionSkip:
+		return fmt.Sprintf("skip %s (%s)", name, action.Reason)
+	default:
+		return fmt.Sprintf("%s %s", action.Type, name)
+	}
+}
+
+func withProgress(lifecyclePlan plan.Plan, stdout io.Writer) plan.Plan {
+	actions := slices.Clone(lifecyclePlan.Actions)
+	total := 0
+	for _, action := range actions {
+		if isExecutable(action.Type) {
+			total++
+		}
+	}
+
+	index := 0
+	for actionIndex, action := range actions {
+		if !isExecutable(action.Type) {
+			continue
+		}
+
+		index++
+		actions[actionIndex].Manager = progressManager{
+			action:  action.Type,
+			index:   index,
+			manager: action.Manager,
+			method:  action.Method,
+			stdout:  stdout,
+			tool:    action.Tool,
+			total:   total,
+		}
+	}
+
+	return plan.Plan{Actions: actions}
+}
+
+func isExecutable(actionType plan.ActionType) bool {
+	switch actionType {
+	case plan.ActionInstall, plan.ActionUpdate, plan.ActionUninstall:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m progressManager) Name() string {
+	return m.manager.Name()
+}
+
+func (m progressManager) Available() bool {
+	return m.manager.Available()
+}
+
+func (m progressManager) Install(ctx context.Context, method catalog.InstallMethod) error {
+	return m.run(ctx, method, "Installing")
+}
+
+func (m progressManager) Update(ctx context.Context, method catalog.InstallMethod) error {
+	return m.run(ctx, method, "Updating")
+}
+
+func (m progressManager) Uninstall(ctx context.Context, method catalog.InstallMethod) error {
+	return m.run(ctx, method, "Uninstalling")
+}
+
+func (m progressManager) run(ctx context.Context, method catalog.InstallMethod, verb string) error {
+	_, _ = fmt.Fprintf(
+		m.stdout,
+		"[%d/%d] %s %s via %s...\n",
+		m.index,
+		m.total,
+		verb,
+		actionLabel(m.tool),
+		method.Manager,
+	)
+
+	var err error
+	switch m.action {
+	case plan.ActionInstall:
+		err = m.manager.Install(ctx, method)
+	case plan.ActionUpdate:
+		err = m.manager.Update(ctx, method)
+	case plan.ActionUninstall:
+		err = m.manager.Uninstall(ctx, method)
+	}
+
+	if err != nil {
+		_, _ = fmt.Fprintf(m.stdout, "      failed %s: %v\n", actionLabel(m.tool), err)
+
+		return wrapError(fmt.Sprintf("%s %s via %s", strings.ToLower(verb), actionLabel(m.tool), method.Manager), err)
+	}
+
+	_, _ = fmt.Fprintf(m.stdout, "      completed %s\n", actionLabel(m.tool))
+
+	return nil
+}
+
+func (v reportingVerifier) Check(ctx context.Context, tool catalog.Tool) (verify.VerifyResult, error) {
+	_, _ = fmt.Fprintf(v.stdout, "      verifying %s...\n", actionLabel(tool))
+
+	result, err := v.next.Check(ctx, tool)
+	if err != nil {
+		_, _ = fmt.Fprintf(v.stdout, "      verification failed for %s: %v\n", actionLabel(tool), err)
+
+		return result, wrapError(fmt.Sprintf("verify %s", actionLabel(tool)), err)
+	}
+
+	if !result.Verified {
+		message := result.Error
+		if message == "" {
+			message = "verification returned false"
+		}
+		_, _ = fmt.Fprintf(v.stdout, "      verification failed for %s: %s\n", actionLabel(tool), message)
+
+		return result, nil
+	}
+
+	if result.Version != "" {
+		_, _ = fmt.Fprintf(v.stdout, "      verified %s (%s)\n", actionLabel(tool), result.Version)
+	} else {
+		_, _ = fmt.Fprintf(v.stdout, "      verified %s\n", actionLabel(tool))
+	}
+
+	return result, nil
+}
+
+func actionLabel(tool catalog.Tool) string {
+	if tool.Name != "" {
+		return tool.Name
+	}
+
+	return tool.Bin
+}
+
+func renderManagerInfo(stdout io.Writer, managers []pkgmgr.Manager) error {
+	names := make([]string, 0, len(managers))
+	secondary := make([]string, 0, len(managers))
+	for _, manager := range managers {
+		name := manager.Name()
+		names = append(names, name)
+		if isSecondaryManager(name) {
+			secondary = append(secondary, name)
+		}
+	}
+
+	if _, err := fmt.Fprintf(stdout, "Detected package managers: %s\n", strings.Join(names, ", ")); err != nil {
+		return wrapError("write package manager summary", err)
+	}
+
+	if len(secondary) > 0 {
+		if _, err := fmt.Fprintf(
+			stdout,
+			"Note: %s must already be installed on the host; atb does not bootstrap those managers.\n\n",
+			strings.Join(secondary, ", "),
+		); err != nil {
+			return wrapError("write secondary manager note", err)
+		}
+
+		return nil
+	}
+
+	_, err := fmt.Fprintln(stdout)
+
+	return wrapError("write package manager spacing", err)
+}
+
+func methodNote(manager string) string {
+	if !isSecondaryManager(manager) {
+		return ""
+	}
+
+	return " (requires that manager on the host)"
+}
+
+func isSecondaryManager(manager string) bool {
+	switch manager {
+	case "cargo", "go", "pipx":
+		return true
+	default:
+		return false
 	}
 }
 

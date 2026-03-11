@@ -24,3 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - End-to-end command wiring for `install`, `status`, `update`, `uninstall`, and `catalog`.
 - Integration coverage for full lifecycle flows, realistic skill output, and state idempotency.
 - GitHub Actions CI and GoReleaser release workflows for verification and tagged builds.
+
+### Changed
+- Installer guidance now presents `must` tools as the recommended baseline instead of preselecting them automatically.
+- The Bubble Tea picker now opens in the alternate screen, keeps the cursor visible in smaller terminals, shows tool descriptions inline, and merges related categories under friendlier headings.
+- Picker search now also matches humanized category names and tool descriptions for easier discovery.
+- Registry metadata and README copy now use more task-oriented tool descriptions and updated language for the recommended baseline flow.
+- `install`, `update`, and `uninstall` now print detected package managers, plan previews, per-step progress, verification status, and skill generation destinations as they run.
+
+### Fixed
+- Runtime command error handling now wraps writer, verifier, and package-manager failures consistently, and the install flow has been refactored to keep linted control flow within limits.
