@@ -5,8 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
 ## [0.1.0] - 2026-03-11
 
 ### Added
@@ -26,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - End-to-end command wiring for `install`, `status`, `update`, `uninstall`, and `catalog`.
 - Integration coverage for full lifecycle flows, realistic skill output, and state idempotency.
 - GitHub Actions CI and GoReleaser release workflows for verification and tagged builds.
+- `atb update` now performs a self-update check against GitHub Releases and replaces the installed `atb` binary when a newer release is available.
+- `make run` now executes the CLI with `go run`, supporting both `make run update` and `make run ARGS='...'` forms.
 
 ### Changed
 - Installer guidance now presents `must` tools as the recommended baseline instead of preselecting them automatically.
@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shell rc-file writes now use atomic temp-file-and-rename to prevent truncation on interrupted writes.
 - Update and uninstall plans now sort deterministically by tool ID within the same tier.
 - `State.LastRunAt` is now set automatically on every state save.
+- Managed tool updates now live under `atb update tools`, keeping `atb update` reserved for updating the CLI itself.
 
 ### Fixed
 - Runtime command error handling now wraps writer, verifier, and package-manager failures consistently, and the install flow has been refactored to keep linted control flow within limits.
@@ -46,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The standalone installer cleanup path no longer references an out-of-scope tempdir on exit.
 - The interactive picker now clears selections when the user quits with `q` or `esc`, preventing unintended tool installations.
 - The `uninstall` command's `persistVerifiedSkill` error is now wrapped consistently with the rest of the runtime error handling.
+- The self-update flow now validates archive extraction more defensively, preserves executable replacement error handling under lint constraints, and reports a clear development-build error when invoked from `go run`.
 
 ### Removed
 - Unused `internal/logx` package.
