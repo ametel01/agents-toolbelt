@@ -14,3 +14,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Platform normalization and package-manager detection with selection logic for catalog install methods.
 - PATH discovery and reconciliation primitives that classify catalog tools as managed, external, or missing.
 - Safe external command execution with timeout, output capture, and preserved exit codes for non-zero results.
+- Tool verification flow that checks PATH presence, runs verify commands, and extracts versions when available.
