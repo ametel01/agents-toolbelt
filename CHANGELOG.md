@@ -31,6 +31,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Picker search now also matches humanized category names and tool descriptions for easier discovery.
 - Registry metadata and README copy now use more task-oriented tool descriptions and updated language for the recommended baseline flow.
 - `install`, `update`, and `uninstall` now print detected package managers, plan previews, per-step progress, verification status, and skill generation destinations as they run.
+- Category label mapping is now defined once in the `catalog` package and shared by skill generation and the TUI picker.
+- `skill.DefaultPaths` now returns an error instead of silently returning nil when the home directory cannot be resolved.
+- Shell rc-file writes now use atomic temp-file-and-rename to prevent truncation on interrupted writes.
+- Update and uninstall plans now sort deterministically by tool ID within the same tier.
+- `State.LastRunAt` is now set automatically on every state save.
 
 ### Fixed
 - Runtime command error handling now wraps writer, verifier, and package-manager failures consistently, and the install flow has been refactored to keep linted control flow within limits.
+- The interactive picker now clears selections when the user quits with `q` or `esc`, preventing unintended tool installations.
+- The `uninstall` command's `persistVerifiedSkill` error is now wrapped consistently with the rest of the runtime error handling.
+
+### Removed
+- Unused `internal/logx` package.
