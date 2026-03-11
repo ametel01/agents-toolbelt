@@ -91,6 +91,18 @@ func TestByCategory(t *testing.T) {
 	}
 }
 
+func TestCategoryLabelsComplete(t *testing.T) {
+	t.Parallel()
+
+	registry := mustLoadRegistry(t)
+
+	for _, tool := range registry.Tools() {
+		if _, ok := CategoryLabels[tool.Category]; !ok {
+			t.Errorf("tool %q uses unmapped category %q", tool.ID, tool.Category)
+		}
+	}
+}
+
 func TestForPlatform(t *testing.T) {
 	t.Parallel()
 
