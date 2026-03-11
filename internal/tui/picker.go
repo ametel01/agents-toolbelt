@@ -27,18 +27,20 @@ type row struct {
 type PickerModel struct {
 	cursor       int
 	expandedNice bool
+	height       int
 	query        string
 	rows         []row
 	searching    bool
 	selected     map[string]bool
 	snapshot     discovery.Snapshot
 	tools        []catalog.Tool
+	width        int
 }
 
 // RunPicker launches the interactive picker and returns the selected tools.
 func RunPicker(tools []catalog.Tool, snapshot discovery.Snapshot) ([]catalog.Tool, error) {
 	model := NewPickerModel(tools, snapshot)
-	finalModel, err := tea.NewProgram(model).Run()
+	finalModel, err := tea.NewProgram(model, tea.WithAltScreen()).Run()
 	if err != nil {
 		return nil, fmt.Errorf("run picker: %w", err)
 	}
@@ -46,7 +48,7 @@ func RunPicker(tools []catalog.Tool, snapshot discovery.Snapshot) ([]catalog.Too
 	return finalModel.(PickerModel).SelectedTools(), nil
 }
 
-// NewPickerModel constructs a picker model with must-have tools preselected.
+// NewPickerModel constructs a picker model with no tools preselected.
 func NewPickerModel(tools []catalog.Tool, snapshot discovery.Snapshot) PickerModel {
 	ordered := slices.Clone(tools)
 	sort.SliceStable(ordered, func(left, right int) bool {
@@ -57,15 +59,8 @@ func NewPickerModel(tools []catalog.Tool, snapshot discovery.Snapshot) PickerMod
 		return ordered[left].Category < ordered[right].Category
 	})
 
-	selected := make(map[string]bool, len(ordered))
-	for _, tool := range ordered {
-		if tool.Tier == catalog.TierMust {
-			selected[tool.ID] = true
-		}
-	}
-
 	model := PickerModel{
-		selected: selected,
+		selected: make(map[string]bool, len(ordered)),
 		snapshot: snapshot,
 		tools:    ordered,
 	}
@@ -84,6 +79,11 @@ func (m PickerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch typed := msg.(type) {
 	case tea.KeyMsg:
 		return m.handleKey(typed)
+	case tea.WindowSizeMsg:
+		m.width = typed.Width
+		m.height = typed.Height
+
+		return m, nil
 	default:
 		return m, nil
 	}
@@ -107,15 +107,23 @@ func (m PickerModel) View() string {
 		return builder.String()
 	}
 
+	start, end := m.windowBounds()
+	if start > 0 {
+		builder.WriteString(subtleStyle.Render("... more tools above ..."))
+		builder.WriteString("\n\n")
+	}
+
 	lastCategory := ""
-	for index, row := range m.rows {
-		if row.kind == rowKindTool && row.tool.Category != lastCategory {
+	for index := start; index < end; index++ {
+		row := m.rows[index]
+		category := displayedCategory(row)
+		if row.kind == rowKindTool && category != lastCategory {
 			if lastCategory != "" {
 				builder.WriteString("\n")
 			}
 
-			lastCategory = row.tool.Category
-			builder.WriteString(titleStyle.Render(humanCategory(row.tool.Category)))
+			lastCategory = category
+			builder.WriteString(titleStyle.Render(category))
 			builder.WriteString("\n")
 		}
 
@@ -124,9 +132,12 @@ func (m PickerModel) View() string {
 			prefix = cursorStyle.Render("> ")
 		}
 
-		builder.WriteString(prefix)
-		builder.WriteString(m.renderRow(row))
+		builder.WriteString(renderPrefixedRow(prefix, m.renderRow(row)))
+	}
+
+	if end < len(m.rows) {
 		builder.WriteString("\n")
+		builder.WriteString(subtleStyle.Render("... more tools below ..."))
 	}
 
 	builder.WriteString("\n")
@@ -325,11 +336,22 @@ func (m PickerModel) renderRow(row row) string {
 		suffix = subtleStyle.Render("  ✓ installed")
 	}
 
-	return fmt.Sprintf("%s %s%s", checkbox, row.tool.Name, suffix)
+	description := row.tool.Description
+	if description == "" {
+		return fmt.Sprintf("%s %s%s", checkbox, row.tool.Name, suffix)
+	}
+
+	return fmt.Sprintf(
+		"%s %s%s\n%s",
+		checkbox,
+		row.tool.Name,
+		suffix,
+		subtleStyle.Render(description),
+	)
 }
 
 func matchesQuery(tool catalog.Tool, query string) bool {
-	values := []string{tool.ID, tool.Name, tool.Category}
+	values := []string{tool.ID, tool.Name, tool.Category, humanCategory(tool.Category), tool.Description}
 	for _, value := range values {
 		if strings.Contains(strings.ToLower(value), query) {
 			return true
@@ -340,5 +362,112 @@ func matchesQuery(tool catalog.Tool, query string) bool {
 }
 
 func humanCategory(category string) string {
+	if label, ok := categoryLabels[category]; ok {
+		return label
+	}
+
 	return strings.ReplaceAll(category, "_", " ")
+}
+
+var categoryLabels = map[string]string{
+	"cloud_gcp":       "Cloud",
+	"database":        "Databases",
+	"env_management":  "Environment",
+	"filesystem":      "Filesystem",
+	"forge":           "Source Control / Forge",
+	"grpc_api":        "HTTP / APIs",
+	"http_api":        "HTTP / APIs",
+	"iac":             "Infrastructure as Code",
+	"json":            "Structured Data",
+	"kubernetes":      "Kubernetes",
+	"linting":         "Linting",
+	"python_runtime":  "Runtime Management",
+	"runtime_manager": "Runtime Management",
+	"search":          "Search",
+	"task_runner":     "Task Running",
+	"text_processing": "Text Processing",
+	"yaml":            "Structured Data",
+}
+
+func (m PickerModel) windowBounds() (int, int) {
+	if m.height <= 0 || len(m.rows) == 0 {
+		return 0, len(m.rows)
+	}
+
+	availableLines := m.height - 4
+	if m.searching {
+		availableLines -= 2
+	}
+	if availableLines < 3 {
+		availableLines = 3
+	}
+
+	start := 0
+	for start < m.cursor && m.rangeLineCount(start, m.cursor+1) > availableLines {
+		start++
+	}
+
+	end := m.cursor + 1
+	for end < len(m.rows) && m.rangeLineCount(start, end+1) <= availableLines {
+		end++
+	}
+
+	for start > 0 && m.rangeLineCount(start-1, end) <= availableLines {
+		start--
+	}
+
+	return start, end
+}
+
+func (m PickerModel) rangeLineCount(start, end int) int {
+	lines := 0
+	lastCategory := ""
+
+	for index := start; index < end; index++ {
+		row := m.rows[index]
+		category := displayedCategory(row)
+		if row.kind == rowKindTool && category != lastCategory {
+			if lastCategory != "" {
+				lines++
+			}
+
+			lines++
+			lastCategory = category
+		}
+
+		lines += rowLineCount(row)
+	}
+
+	return lines
+}
+
+func renderPrefixedRow(prefix, row string) string {
+	lines := strings.Split(row, "\n")
+	for index, line := range lines {
+		if index == 0 {
+			lines[index] = prefix + line
+
+			continue
+		}
+
+		lines[index] = "  " + line
+	}
+
+	return strings.Join(lines, "\n") + "\n"
+}
+
+func rowLineCount(row row) int {
+	if row.kind == rowKindMore || row.tool.Description == "" {
+		return 1
+	}
+
+	return 2
+}
+
+func displayedCategory(row row) string {
+	if row.kind != rowKindTool {
+		return ""
+	}
+
+	return humanCategory(row.tool.Category)
 }

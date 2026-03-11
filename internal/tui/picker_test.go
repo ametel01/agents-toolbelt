@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/ametel01/agents-toolbelt/internal/catalog"
@@ -8,7 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func TestNewPickerModelPreselectsMustTools(t *testing.T) {
+func TestNewPickerModelStartsWithNothingSelected(t *testing.T) {
 	t.Parallel()
 
 	model := NewPickerModel([]catalog.Tool{
@@ -16,12 +17,8 @@ func TestNewPickerModelPreselectsMustTools(t *testing.T) {
 		{ID: "shellcheck", Name: "shellcheck", Tier: catalog.TierShould, Category: "linting"},
 	}, discovery.Snapshot{})
 
-	if !model.selected["rg"] {
-		t.Fatal("must-have tools should be preselected")
-	}
-
-	if model.selected["shellcheck"] {
-		t.Fatal("should-have tools should start unselected")
+	if len(model.selected) != 0 {
+		t.Fatalf("len(model.selected) = %d, want 0", len(model.selected))
 	}
 }
 
@@ -75,5 +72,70 @@ func TestNiceToolsStartCollapsed(t *testing.T) {
 
 	if !expanded.expandedNice {
 		t.Fatal("space on the more row should expand nice tools")
+	}
+}
+
+func TestWindowBoundsKeepsCursorVisible(t *testing.T) {
+	t.Parallel()
+
+	model := NewPickerModel([]catalog.Tool{
+		{ID: "gh", Name: "gh", Tier: catalog.TierMust, Category: "forge"},
+		{ID: "rg", Name: "ripgrep", Tier: catalog.TierMust, Category: "search"},
+		{ID: "fd", Name: "fd", Tier: catalog.TierMust, Category: "filesystem"},
+		{ID: "jq", Name: "jq", Tier: catalog.TierMust, Category: "json"},
+		{ID: "yq", Name: "yq", Tier: catalog.TierMust, Category: "yaml"},
+		{ID: "direnv", Name: "direnv", Tier: catalog.TierMust, Category: "env_management"},
+		{ID: "just", Name: "just", Tier: catalog.TierMust, Category: "task_runner"},
+		{ID: "uv", Name: "uv", Tier: catalog.TierMust, Category: "python_runtime"},
+	}, discovery.Snapshot{})
+
+	model.height = 8
+	model.cursor = len(model.rows) - 1
+
+	start, end := model.windowBounds()
+	if start >= end {
+		t.Fatalf("windowBounds() = (%d, %d), want non-empty range", start, end)
+	}
+
+	if model.cursor < start || model.cursor >= end {
+		t.Fatalf("cursor %d not visible in range [%d, %d)", model.cursor, start, end)
+	}
+}
+
+func TestHumanCategoryUsesFriendlyLabels(t *testing.T) {
+	t.Parallel()
+
+	if got := humanCategory("forge"); got != "Source Control / Forge" {
+		t.Fatalf("humanCategory(%q) = %q, want %q", "forge", got, "Source Control / Forge")
+	}
+}
+
+func TestViewShowsDescriptionAndMergedCategoryLabel(t *testing.T) {
+	t.Parallel()
+
+	model := NewPickerModel([]catalog.Tool{
+		{
+			ID:          "jq",
+			Name:        "jq",
+			Tier:        catalog.TierMust,
+			Category:    "json",
+			Description: "Query and rewrite JSON output.",
+		},
+		{
+			ID:          "yq",
+			Name:        "yq",
+			Tier:        catalog.TierMust,
+			Category:    "yaml",
+			Description: "Edit YAML config from scripts.",
+		},
+	}, discovery.Snapshot{})
+
+	view := model.View()
+	if strings.Count(view, "Structured Data") != 1 {
+		t.Fatalf("View() = %q, want one merged Structured Data heading", view)
+	}
+
+	if !strings.Contains(view, "Query and rewrite JSON output.") {
+		t.Fatalf("View() = %q, want tool description", view)
 	}
 }
