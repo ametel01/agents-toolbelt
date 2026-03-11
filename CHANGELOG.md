@@ -22,3 +22,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shell hook suggestion and idempotent rc-file application support for tools that need initialization.
 - Interactive Bubble Tea picker with preselection, search, collapse/expand behavior, and installed markers.
 - End-to-end command wiring for `install`, `status`, `update`, `uninstall`, and `catalog`.
+- Integration coverage for full lifecycle flows, realistic skill output, and state idempotency.

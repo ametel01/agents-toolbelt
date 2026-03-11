@@ -805,6 +805,8 @@ make verify
 
 ## Step 14 — Integration Tests
 
+Status: **COMPLETED**
+
 **Goal**: End-to-end tests with fakes validating full install/update/uninstall cycles.
 
 **Files to create**:
