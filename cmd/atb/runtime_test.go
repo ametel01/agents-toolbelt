@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -69,6 +72,22 @@ func TestRefreshVerifiedToolsIncludesExternalTools(t *testing.T) {
 
 	if jqReceipt.Ownership != state.OwnershipManaged {
 		t.Fatalf("jq ownership = %q, want %q", jqReceipt.Ownership, state.OwnershipManaged)
+	}
+}
+
+func TestRunSelfUpdateRejectsDevelopmentBuilds(t *testing.T) {
+	t.Parallel()
+
+	previousVersion := version
+	version = "dev"
+	t.Cleanup(func() {
+		version = previousVersion
+	})
+
+	var stdout bytes.Buffer
+	err := runSelfUpdate(context.Background(), &stdout, io.Discard)
+	if !errors.Is(err, errSelfUpdateDevBuild) {
+		t.Fatalf("runSelfUpdate() error = %v, want %v", err, errSelfUpdateDevBuild)
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"slices"
 	"strings"
 	"text/tabwriter"
@@ -18,6 +19,7 @@ import (
 	"github.com/ametel01/agents-toolbelt/internal/pkgmgr"
 	"github.com/ametel01/agents-toolbelt/internal/plan"
 	"github.com/ametel01/agents-toolbelt/internal/platform"
+	"github.com/ametel01/agents-toolbelt/internal/selfupdate"
 	"github.com/ametel01/agents-toolbelt/internal/shell"
 	"github.com/ametel01/agents-toolbelt/internal/skill"
 	"github.com/ametel01/agents-toolbelt/internal/state"
@@ -25,7 +27,10 @@ import (
 	"github.com/ametel01/agents-toolbelt/internal/verify"
 )
 
-var errNoSupportedPackageManagers = errors.New("no supported package managers detected")
+var (
+	errNoSupportedPackageManagers = errors.New("no supported package managers detected")
+	errSelfUpdateDevBuild         = errors.New("self-update is unavailable in development builds; use a released atb binary instead")
+)
 
 type liveVerifier struct{}
 
@@ -245,7 +250,39 @@ func runCatalog(stdout, stderr io.Writer) error {
 	return wrapError("flush catalog output", writer.Flush())
 }
 
-func runUpdate(ctx context.Context, stdout, stderr io.Writer, toolID string) error {
+func runSelfUpdate(ctx context.Context, stdout, _ io.Writer) error {
+	if version == "dev" {
+		return wrapError("self update", errSelfUpdateDevBuild)
+	}
+
+	result, err := selfupdate.Update(ctx, selfupdate.Options{
+		CurrentVersion: version,
+		GOARCH:         runtime.GOARCH,
+		GOOS:           runtime.GOOS,
+	})
+	if err != nil {
+		return wrapError("self update", err)
+	}
+
+	if !result.Updated {
+		if _, err := fmt.Fprintf(stdout, "atb is already up to date (%s)\n", result.CurrentVersion); err != nil {
+			return wrapError("write self update status", err)
+		}
+
+		return nil
+	}
+
+	if _, err := fmt.Fprintf(stdout, "updated atb from %s to %s\n", result.CurrentVersion, result.LatestVersion); err != nil {
+		return wrapError("write self update result", err)
+	}
+	if _, err := fmt.Fprintf(stdout, "binary path: %s\n", result.ExecutablePath); err != nil {
+		return wrapError("write self update path", err)
+	}
+
+	return nil
+}
+
+func runToolUpdate(ctx context.Context, stdout, stderr io.Writer, toolID string) error {
 	registry, err := catalog.LoadRegistry()
 	if err != nil {
 		return wrapError("load catalog", err)

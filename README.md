@@ -220,10 +220,16 @@ View the available tool catalog:
 atb catalog
 ```
 
-Update tools installed by `atb`:
+Update the `atb` CLI itself:
 
 ```bash
 atb update
+```
+
+Update tools installed by `atb`:
+
+```bash
+atb update tools
 ```
 
 Uninstall tools managed by `atb`:
@@ -279,19 +285,27 @@ atb install -y
 
 This runs in headless mode and installs the tools marked as default selections for the current platform.
 
-### Update tools managed by `atb`
+### Update the `atb` CLI
 
 ```bash
 atb update
 ```
 
+This checks GitHub Releases for a newer `atb` binary and replaces the current executable in place.
+
+### Update tools managed by `atb`
+
+```bash
+atb update tools
+```
+
 To update one managed tool only:
 
 ```bash
-atb update rg
+atb update tools rg
 ```
 
-`atb update` does not update tools that are merely detected on `PATH` without an `atb` receipt.
+`atb update tools` does not update tools that are merely detected on `PATH` without an `atb` receipt.
 
 ### Uninstall tools managed by `atb`
 
