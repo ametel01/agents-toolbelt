@@ -64,6 +64,8 @@ make verify                         # all gates pass (trivially, no code yet)
 
 ## Step 1 — Cobra CLI Skeleton with Subcommands
 
+Status: **COMPLETED**
+
 **Goal**: `atb install`, `atb status`, `atb update`, `atb uninstall`, `atb catalog` all parse and print "not implemented".
 
 **Files to create/modify**:
