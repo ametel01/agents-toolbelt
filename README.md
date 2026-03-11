@@ -20,12 +20,32 @@ Install `atb` with a single `curl | bash` command. **Go does not need to be inst
 curl -fsSL https://raw.githubusercontent.com/ametel01/agents-toolbelt/main/scripts/install.sh | bash
 ```
 
-By default the installer places `atb` in `/usr/local/bin`.
+By default the installer:
+
+* installs to `~/.local/bin` for a normal user
+* installs to `/usr/local/bin` only when run as `root`
+
+It does **not** invoke `sudo` automatically.
 
 To install to a different directory on your `PATH`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ametel01/agents-toolbelt/main/scripts/install.sh | ATB_INSTALL_DIR="$HOME/.local/bin" bash
+```
+
+For a system-wide install, inspect the script first and then run it with explicit privileges:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/ametel01/agents-toolbelt/main/scripts/install.sh
+less install.sh
+sudo ATB_INSTALL_DIR=/usr/local/bin bash install.sh
+```
+
+If `~/.local/bin` is not already on your `PATH`, add it:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 To install a specific release tag instead of the latest:

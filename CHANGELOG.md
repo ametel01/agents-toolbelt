@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Installer guidance now presents `must` tools as the recommended baseline instead of preselecting them automatically.
+- The standalone installer now defaults to `~/.local/bin` for non-root installs and only targets `/usr/local/bin` when run as `root`, avoiding implicit privilege escalation.
 - The Bubble Tea picker now opens in the alternate screen, keeps the cursor visible in smaller terminals, shows tool descriptions inline, and merges related categories under friendlier headings.
 - Picker search now also matches humanized category names and tool descriptions for easier discovery.
 - Registry metadata and README copy now use more task-oriented tool descriptions and updated language for the recommended baseline flow.
@@ -41,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Runtime command error handling now wraps writer, verifier, and package-manager failures consistently, and the install flow has been refactored to keep linted control flow within limits.
+- The standalone installer now emits concrete `resolution:` hints for missing prerequisites, unsupported platforms, download and extraction failures, and unwritable install directories.
+- The standalone installer cleanup path no longer references an out-of-scope tempdir on exit.
 - The interactive picker now clears selections when the user quits with `q` or `esc`, preventing unintended tool installations.
 - The `uninstall` command's `persistVerifiedSkill` error is now wrapped consistently with the rest of the runtime error handling.
 
