@@ -278,11 +278,14 @@ func isValidAuthMode(authMode string) bool {
 // CategoryLabels maps internal category identifiers to human-readable labels.
 var CategoryLabels = map[string]string{
 	"benchmarking":    "Benchmarking",
+	"code_stats":      "Code Statistics",
 	"cloud_gcp":       "Cloud",
+	"csv":             "Structured Data",
 	"database":        "Databases",
 	"env_management":  "Environment",
 	"filesystem":      "Filesystem",
 	"forge":           "Source Control / Forge",
+	"git_tools":       "Git Tools",
 	"grpc_api":        "HTTP / APIs",
 	"http_api":        "HTTP / APIs",
 	"iac":             "Infrastructure as Code",

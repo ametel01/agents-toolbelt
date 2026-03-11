@@ -430,6 +430,178 @@
     "tags": ["python", "venv", "packages"]
   },
   {
+    "id": "tree",
+    "bin": "tree",
+    "name": "tree",
+    "tier": "must",
+    "category": "filesystem",
+    "description": "Inspect repository and directory structure recursively without stitching together multiple ls calls.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "tree",
+        "command": ["brew", "install", "tree"],
+        "update_command": ["brew", "upgrade", "tree"],
+        "uninstall_command": ["brew", "uninstall", "tree"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "apt",
+        "package": "tree",
+        "command": ["sudo", "apt", "install", "-y", "tree"],
+        "update_command": ["sudo", "apt", "install", "-y", "--only-upgrade", "tree"],
+        "uninstall_command": ["sudo", "apt", "remove", "-y", "tree"],
+        "requires_sudo": true,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["tree", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "v?([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["filesystem", "directories", "layout"]
+  },
+  {
+    "id": "bat",
+    "bin": "bat",
+    "name": "bat",
+    "tier": "must",
+    "category": "filesystem",
+    "description": "View files with syntax highlighting and paging that is easier to scan than raw cat output.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "bat",
+        "command": ["brew", "install", "bat"],
+        "update_command": ["brew", "upgrade", "bat"],
+        "uninstall_command": ["brew", "uninstall", "bat"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "bat",
+        "command": ["cargo", "install", "--locked", "bat"],
+        "update_command": ["cargo", "install", "--locked", "bat"],
+        "uninstall_command": ["cargo", "uninstall", "bat"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["bat", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "bat ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["files", "viewer", "syntax-highlighting"]
+  },
+  {
+    "id": "delta",
+    "bin": "delta",
+    "name": "delta",
+    "tier": "must",
+    "category": "git_tools",
+    "description": "Read git diffs with syntax highlighting and word-level change emphasis.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "git-delta",
+        "command": ["brew", "install", "git-delta"],
+        "update_command": ["brew", "upgrade", "git-delta"],
+        "uninstall_command": ["brew", "uninstall", "git-delta"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "git-delta",
+        "command": ["cargo", "install", "--locked", "git-delta"],
+        "update_command": ["cargo", "install", "--locked", "git-delta"],
+        "uninstall_command": ["cargo", "uninstall", "git-delta"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["delta", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "delta ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["git", "diff", "review"]
+  },
+  {
+    "id": "watchexec",
+    "bin": "watchexec",
+    "name": "watchexec",
+    "tier": "must",
+    "category": "task_runner",
+    "description": "Rerun tests, builds, or scripts automatically when files change during iteration loops.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "watchexec",
+        "command": ["brew", "install", "watchexec"],
+        "update_command": ["brew", "upgrade", "watchexec"],
+        "uninstall_command": ["brew", "uninstall", "watchexec"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "watchexec-cli",
+        "command": ["cargo", "install", "--locked", "watchexec-cli"],
+        "update_command": ["cargo", "install", "--locked", "watchexec-cli"],
+        "uninstall_command": ["cargo", "uninstall", "watchexec-cli"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["watchexec", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "watchexec ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["watch", "automation", "feedback-loop"]
+  },
+  {
     "id": "shellcheck",
     "bin": "shellcheck",
     "name": "ShellCheck",
@@ -471,6 +643,178 @@
     "skill_expose": true,
     "default_selected": false,
     "tags": ["shell", "lint", "analysis"]
+  },
+  {
+    "id": "tokei",
+    "bin": "tokei",
+    "name": "tokei",
+    "tier": "should",
+    "category": "code_stats",
+    "description": "Count lines, comments, blanks, and languages quickly to size up a codebase before diving in.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "tokei",
+        "command": ["brew", "install", "tokei"],
+        "update_command": ["brew", "upgrade", "tokei"],
+        "uninstall_command": ["brew", "uninstall", "tokei"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "tokei",
+        "command": ["cargo", "install", "--locked", "tokei"],
+        "update_command": ["cargo", "install", "--locked", "tokei"],
+        "uninstall_command": ["cargo", "uninstall", "tokei"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["tokei", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "tokei ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["stats", "languages", "codebase"]
+  },
+  {
+    "id": "difftastic",
+    "bin": "difft",
+    "name": "difftastic",
+    "tier": "should",
+    "category": "git_tools",
+    "description": "Compare code changes structurally with syntax-aware diffs instead of plain line diffs.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "difftastic",
+        "command": ["brew", "install", "difftastic"],
+        "update_command": ["brew", "upgrade", "difftastic"],
+        "uninstall_command": ["brew", "uninstall", "difftastic"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "difftastic",
+        "command": ["cargo", "install", "--locked", "difftastic"],
+        "update_command": ["cargo", "install", "--locked", "difftastic"],
+        "uninstall_command": ["cargo", "uninstall", "difftastic"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["difft", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["diff", "ast", "review"]
+  },
+  {
+    "id": "xsv",
+    "bin": "xsv",
+    "name": "xsv",
+    "tier": "should",
+    "category": "csv",
+    "description": "Slice, sort, sample, and inspect CSV data quickly from the command line. Note: deprecated in Homebrew; consider qsv as a maintained alternative.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "xsv",
+        "command": ["brew", "install", "xsv"],
+        "update_command": ["brew", "upgrade", "xsv"],
+        "uninstall_command": ["brew", "uninstall", "xsv"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "xsv",
+        "command": ["cargo", "install", "--locked", "xsv"],
+        "update_command": ["cargo", "install", "--locked", "xsv"],
+        "uninstall_command": ["cargo", "uninstall", "xsv"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["xsv", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["csv", "data", "tabular"]
+  },
+  {
+    "id": "semgrep",
+    "bin": "semgrep",
+    "name": "Semgrep",
+    "tier": "should",
+    "category": "linting",
+    "description": "Find code patterns with syntax-aware rules that go beyond plain regex searching.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "semgrep",
+        "command": ["brew", "install", "semgrep"],
+        "update_command": ["brew", "upgrade", "semgrep"],
+        "uninstall_command": ["brew", "uninstall", "semgrep"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      },
+      {
+        "manager": "pipx",
+        "package": "semgrep",
+        "command": ["pipx", "install", "semgrep"],
+        "update_command": ["pipx", "upgrade", "semgrep"],
+        "uninstall_command": ["pipx", "uninstall", "semgrep"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "optional",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["semgrep", "--version"],
+      "timeout_seconds": 15,
+      "expected_exit_codes": [0],
+      "version_regex": "([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["analysis", "security", "patterns"]
   },
   {
     "id": "sqlite3",
@@ -536,8 +880,8 @@
       {
         "manager": "cargo",
         "package": "hyperfine",
-        "command": ["cargo", "install", "hyperfine"],
-        "update_command": ["cargo", "install", "hyperfine"],
+        "command": ["cargo", "install", "--locked", "hyperfine"],
+        "update_command": ["cargo", "install", "--locked", "hyperfine"],
         "uninstall_command": ["cargo", "uninstall", "hyperfine"],
         "requires_sudo": false,
         "timeout_seconds": 900
@@ -579,8 +923,8 @@
       {
         "manager": "cargo",
         "package": "mise",
-        "command": ["cargo", "install", "mise"],
-        "update_command": ["cargo", "install", "mise"],
+        "command": ["cargo", "install", "--locked", "mise"],
+        "update_command": ["cargo", "install", "--locked", "mise"],
         "uninstall_command": ["cargo", "uninstall", "mise"],
         "requires_sudo": false,
         "timeout_seconds": 900
