@@ -8,6 +8,40 @@ Instead of manually discovering, installing, and configuring dozens of tools acr
 
 ---
 
+## Installation
+
+Install `atb` with a single `curl | bash` command. **Go does not need to be installed on the host machine**.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ametel01/agents-toolbelt/main/scripts/install.sh | bash
+```
+
+By default the installer places `atb` in `/usr/local/bin`.
+
+To install to a different directory on your `PATH`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ametel01/agents-toolbelt/main/scripts/install.sh | ATB_INSTALL_DIR="$HOME/.local/bin" bash
+```
+
+To install a specific release tag instead of the latest:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ametel01/agents-toolbelt/main/scripts/install.sh | ATB_VERSION="v0.1.0" bash
+```
+
+Verify the installation:
+
+```bash
+atb --version
+```
+
+Manual release downloads are also available at:
+
+`https://github.com/ametel01/agents-toolbelt/releases`
+
+---
+
 ## Why `atb` exists
 
 Modern development environments often depend on many small command-line tools:
@@ -170,6 +204,93 @@ Uninstall tools managed by `atb`:
 ```
 atb uninstall <tool>
 ```
+
+---
+
+## Operational usage
+
+These are the core commands users will run after `atb` is installed.
+
+### Browse the available catalog
+
+```
+atb catalog
+```
+
+Use this to inspect the embedded tool catalog, including tier, category, and current detected install status.
+
+### Inspect the current machine state
+
+```
+atb status
+```
+
+This shows:
+
+* whether each tool is installed
+* whether it is managed by `atb` or external
+* the detected binary path
+* the last recorded verification result
+
+### Install in interactive mode
+
+```
+atb install
+```
+
+This opens the terminal picker so users can:
+
+* keep `must` tools preselected
+* optionally add `should` tools
+* expand and choose `nice` tools
+
+### Install defaults without prompts
+
+```
+atb install -y
+```
+
+This runs in headless mode and installs the tools marked as default selections for the current platform.
+
+### Update tools managed by `atb`
+
+```
+atb update
+```
+
+To update one managed tool only:
+
+```
+atb update fzf
+```
+
+`atb update` does not update tools that are merely detected on `PATH` without an `atb` receipt.
+
+### Uninstall tools managed by `atb`
+
+```
+atb uninstall fzf
+```
+
+To remove all managed tools:
+
+```
+atb uninstall --all
+```
+
+`atb uninstall` refuses to remove tools that were not installed by `atb`.
+
+### Shell integration behavior
+
+Some tools such as `zoxide`, `direnv`, `atuin`, and `starship` can add shell initialization lines.
+
+`atb` can:
+
+* suggest those shell hook lines
+* record whether the user accepted or declined them
+* apply confirmed changes idempotently
+
+It does **not** modify shell rc files without explicit confirmation.
 
 ---
 

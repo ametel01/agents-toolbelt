@@ -13,3 +13,4 @@ builds:
 archives:
   - formats:
       - tar.gz
+    name_template: "atb_{{ .Os }}_{{ .Arch }}"
