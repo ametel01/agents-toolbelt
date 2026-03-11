@@ -18,6 +18,20 @@ const (
 	rowKindTool rowKind = "tool"
 )
 
+const banner = ` █████╗ ████████╗██████╗
+██╔══██╗╚══██╔══╝██╔══██╗
+███████║   ██║   ██████╔╝
+██╔══██║   ██║   ██╔══██╗
+██║  ██║   ██║   ██████╔╝
+╚═╝  ╚═╝   ╚═╝   ╚═════╝`
+
+// viewOverhead is the number of non-tool lines rendered by View():
+// banner(6) + subtitle(1) + blank(1) + counter(1) + blank(1) = 10 header
+// scroll-indicators(2) + blank(1) + help(1) = 4 footer (worst case)
+// ↑-indicator(2) when scrolled past top = 2
+// Total = 16
+const viewOverhead = 16
+
 type row struct {
 	kind rowKind
 	tool catalog.Tool
@@ -93,12 +107,26 @@ func (m PickerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders the picker state.
 func (m PickerModel) View() string {
 	var builder strings.Builder
-	builder.WriteString(titleStyle.Render("Select CLI Tools"))
+
+	builder.WriteString(bannerStyle.Render(banner))
+	builder.WriteString("\n")
+	builder.WriteString(subtitleStyle.Render("Interactive CLI tool selector for AI agents"))
+	builder.WriteString("\n\n")
+
+	count := m.selectedCount()
+	total := len(m.tools)
+	if count > 0 {
+		builder.WriteString(counterStyle.Render(fmt.Sprintf("%d", count)))
+		builder.WriteString(subtleStyle.Render(fmt.Sprintf(" of %d selected", total)))
+	} else {
+		builder.WriteString(subtleStyle.Render(fmt.Sprintf("0 of %d selected", total)))
+	}
 	builder.WriteString("\n\n")
 
 	if m.searching {
-		builder.WriteString("Search: ")
+		builder.WriteString(searchStyle.Render("/ "))
 		builder.WriteString(m.query)
+		builder.WriteString(subtleStyle.Render("█"))
 		builder.WriteString("\n\n")
 	}
 
@@ -110,7 +138,7 @@ func (m PickerModel) View() string {
 
 	start, end := m.windowBounds()
 	if start > 0 {
-		builder.WriteString(subtleStyle.Render("... more tools above ..."))
+		builder.WriteString(subtleStyle.Render("  ↑ more tools above"))
 		builder.WriteString("\n\n")
 	}
 
@@ -124,13 +152,13 @@ func (m PickerModel) View() string {
 			}
 
 			lastCategory = category
-			builder.WriteString(titleStyle.Render(category))
+			builder.WriteString(categoryStyle.Render(category))
 			builder.WriteString("\n")
 		}
 
 		prefix := "  "
 		if index == m.cursor {
-			prefix = cursorStyle.Render("> ")
+			prefix = cursorStyle.Render("❯ ")
 		}
 
 		builder.WriteString(renderPrefixedRow(prefix, m.renderRow(row)))
@@ -138,11 +166,11 @@ func (m PickerModel) View() string {
 
 	if end < len(m.rows) {
 		builder.WriteString("\n")
-		builder.WriteString(subtleStyle.Render("... more tools below ..."))
+		builder.WriteString(subtleStyle.Render("  ↓ more tools below"))
 	}
 
-	builder.WriteString("\n")
-	builder.WriteString(subtleStyle.Render("space toggle • a select all • n deselect all • / search • enter confirm • q quit"))
+	builder.WriteString("\n\n")
+	builder.WriteString(m.helpBar())
 
 	return builder.String()
 }
@@ -333,14 +361,14 @@ func (m PickerModel) renderRow(row row) string {
 		return subtleStyle.Render("▸ " + row.tool.Name)
 	}
 
-	checkbox := "[ ]"
+	checkbox := subtleStyle.Render("◯")
 	if m.selected[row.tool.ID] {
-		checkbox = selectedStyle.Render("[x]")
+		checkbox = selectedStyle.Render("◉")
 	}
 
 	suffix := ""
 	if presence, ok := m.snapshot.Tools[row.tool.ID]; ok && presence.Installed {
-		suffix = subtleStyle.Render("  ✓ installed")
+		suffix = selectedStyle.Render("  ✓") + subtleStyle.Render(" installed")
 	}
 
 	description := row.tool.Description
@@ -353,8 +381,30 @@ func (m PickerModel) renderRow(row row) string {
 		checkbox,
 		row.tool.Name,
 		suffix,
-		subtleStyle.Render(description),
+		subtleStyle.Render("  "+description),
 	)
+}
+
+func (m PickerModel) selectedCount() int {
+	count := 0
+	for _, v := range m.selected {
+		if v {
+			count++
+		}
+	}
+
+	return count
+}
+
+func (m PickerModel) helpBar() string {
+	sep := helpSepStyle.Render(" • ")
+
+	return helpKeyStyle.Render("space") + subtleStyle.Render(" toggle") + sep +
+		helpKeyStyle.Render("a") + subtleStyle.Render(" all") + sep +
+		helpKeyStyle.Render("n") + subtleStyle.Render(" none") + sep +
+		helpKeyStyle.Render("/") + subtleStyle.Render(" search") + sep +
+		helpKeyStyle.Render("↵") + subtleStyle.Render(" confirm") + sep +
+		helpKeyStyle.Render("q") + subtleStyle.Render(" quit")
 }
 
 func matchesQuery(tool catalog.Tool, query string) bool {
@@ -377,10 +427,12 @@ func (m PickerModel) windowBounds() (int, int) {
 		return 0, len(m.rows)
 	}
 
-	availableLines := m.height - 4
+	overhead := viewOverhead
 	if m.searching {
-		availableLines -= 2
+		overhead += 2
 	}
+
+	availableLines := m.height - overhead
 	if availableLines < 3 {
 		availableLines = 3
 	}
@@ -433,7 +485,7 @@ func renderPrefixedRow(prefix, row string) string {
 			continue
 		}
 
-		lines[index] = "  " + line
+		lines[index] = "      " + line
 	}
 
 	return strings.Join(lines, "\n") + "\n"
