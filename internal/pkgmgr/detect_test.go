@@ -38,9 +38,9 @@ func TestSelectBest(t *testing.T) {
 		t.Fatalf("LoadRegistry() error = %v", err)
 	}
 
-	tool, ok := registry.ByID("fzf")
+	tool, ok := registry.ByID("rg")
 	if !ok {
-		t.Fatal("registry.ByID(\"fzf\") did not find a tool")
+		t.Fatal("registry.ByID(\"rg\") did not find a tool")
 	}
 
 	available := []Manager{
@@ -70,9 +70,9 @@ func TestSelectBestNoManagers(t *testing.T) {
 		t.Fatalf("LoadRegistry() error = %v", err)
 	}
 
-	tool, ok := registry.ByID("fzf")
+	tool, ok := registry.ByID("rg")
 	if !ok {
-		t.Fatal("registry.ByID(\"fzf\") did not find a tool")
+		t.Fatal("registry.ByID(\"rg\") did not find a tool")
 	}
 
 	_, _, err = SelectBest(tool, nil)
@@ -93,9 +93,9 @@ func TestSelectBestNoMatchingMethod(t *testing.T) {
 		t.Fatalf("LoadRegistry() error = %v", err)
 	}
 
-	tool, ok := registry.ByID("fzf")
+	tool, ok := registry.ByID("rg")
 	if !ok {
-		t.Fatal("registry.ByID(\"fzf\") did not find a tool")
+		t.Fatal("registry.ByID(\"rg\") did not find a tool")
 	}
 
 	available := []Manager{

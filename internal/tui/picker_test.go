@@ -12,15 +12,15 @@ func TestNewPickerModelPreselectsMustTools(t *testing.T) {
 	t.Parallel()
 
 	model := NewPickerModel([]catalog.Tool{
-		{ID: "fzf", Name: "fzf", Tier: catalog.TierMust, Category: "navigation"},
-		{ID: "starship", Name: "starship", Tier: catalog.TierShould, Category: "shell_prompt"},
+		{ID: "rg", Name: "ripgrep", Tier: catalog.TierMust, Category: "search"},
+		{ID: "shellcheck", Name: "shellcheck", Tier: catalog.TierShould, Category: "linting"},
 	}, discovery.Snapshot{})
 
-	if !model.selected["fzf"] {
+	if !model.selected["rg"] {
 		t.Fatal("must-have tools should be preselected")
 	}
 
-	if model.selected["starship"] {
+	if model.selected["shellcheck"] {
 		t.Fatal("should-have tools should start unselected")
 	}
 }
@@ -29,12 +29,12 @@ func TestSpaceTogglesCurrentTool(t *testing.T) {
 	t.Parallel()
 
 	model := NewPickerModel([]catalog.Tool{
-		{ID: "starship", Name: "starship", Tier: catalog.TierShould, Category: "shell_prompt"},
+		{ID: "shellcheck", Name: "shellcheck", Tier: catalog.TierShould, Category: "linting"},
 	}, discovery.Snapshot{})
 
 	updated, _ := model.Update(tea.KeyMsg{Type: tea.KeySpace})
 	got := updated.(PickerModel)
-	if !got.selected["starship"] {
+	if !got.selected["shellcheck"] {
 		t.Fatal("space should select the current tool")
 	}
 }
@@ -43,17 +43,17 @@ func TestSearchFiltersRows(t *testing.T) {
 	t.Parallel()
 
 	model := NewPickerModel([]catalog.Tool{
-		{ID: "fzf", Name: "fzf", Tier: catalog.TierMust, Category: "navigation"},
-		{ID: "starship", Name: "starship", Tier: catalog.TierShould, Category: "shell_prompt"},
+		{ID: "rg", Name: "ripgrep", Tier: catalog.TierMust, Category: "search"},
+		{ID: "shellcheck", Name: "shellcheck", Tier: catalog.TierShould, Category: "linting"},
 	}, discovery.Snapshot{})
 
 	updated, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
 	searching := updated.(PickerModel)
-	updated, _ = searching.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("s")})
+	updated, _ = searching.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("lint")})
 	filtered := updated.(PickerModel)
 
-	if len(filtered.rows) != 1 || filtered.rows[0].tool.ID != "starship" {
-		t.Fatalf("filtered rows = %#v, want only starship", filtered.rows)
+	if len(filtered.rows) != 1 || filtered.rows[0].tool.ID != "shellcheck" {
+		t.Fatalf("filtered rows = %#v, want only shellcheck", filtered.rows)
 	}
 }
 
@@ -61,8 +61,8 @@ func TestNiceToolsStartCollapsed(t *testing.T) {
 	t.Parallel()
 
 	model := NewPickerModel([]catalog.Tool{
-		{ID: "fzf", Name: "fzf", Tier: catalog.TierMust, Category: "navigation"},
-		{ID: "k9s", Name: "k9s", Tier: catalog.TierNice, Category: "kubernetes_tui"},
+		{ID: "rg", Name: "ripgrep", Tier: catalog.TierMust, Category: "search"},
+		{ID: "sqlite3", Name: "sqlite3", Tier: catalog.TierNice, Category: "database"},
 	}, discovery.Snapshot{})
 
 	if len(model.rows) != 2 {

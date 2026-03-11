@@ -105,11 +105,9 @@ func (s *State) AddReceipt(receipt ToolState) error {
 		return errMissingToolID
 	}
 
-	s.ensureInitialized()
 	receipt.Ownership = OwnershipManaged
-	s.Tools[receipt.ToolID] = receipt
 
-	return nil
+	return s.SetTool(receipt)
 }
 
 // MarkExternal records that a tool exists but is not managed by atb.
@@ -118,13 +116,22 @@ func (s *State) MarkExternal(toolID, bin, binaryPath string) error {
 		return errMissingToolID
 	}
 
-	s.ensureInitialized()
-	s.Tools[toolID] = ToolState{
+	return s.SetTool(ToolState{
 		ToolID:     toolID,
 		Bin:        bin,
 		Ownership:  OwnershipExternal,
 		BinaryPath: binaryPath,
+	})
+}
+
+// SetTool stores tool state without changing ownership semantics.
+func (s *State) SetTool(toolState ToolState) error {
+	if toolState.ToolID == "" {
+		return errMissingToolID
 	}
+
+	s.ensureInitialized()
+	s.Tools[toolState.ToolID] = toolState
 
 	return nil
 }

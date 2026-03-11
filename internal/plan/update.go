@@ -19,12 +19,12 @@ func BuildUpdatePlan(snapshot discovery.Snapshot, managers []pkgmgr.Manager, too
 			continue
 		}
 
-		method, manager, err := pkgmgr.SelectBest(presence.Tool, managers)
-		if err != nil {
+		method, manager, ok := methodForReceipt(presence.Tool, presence.Receipt.InstallManager, managers)
+		if !ok {
 			actions = append(actions, Action{
 				Tool:   presence.Tool,
 				Type:   ActionSkip,
-				Reason: err.Error(),
+				Reason: "install manager is no longer available",
 			})
 
 			continue

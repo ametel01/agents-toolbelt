@@ -32,16 +32,15 @@ func TestSuggestions(t *testing.T) {
 	t.Setenv("SHELL", "/bin/zsh")
 
 	suggestions := Suggestions([]catalog.Tool{
-		{ID: "zoxide", Name: "zoxide", ShellHook: "required"},
-		{ID: "starship", Name: "starship", ShellHook: "optional"},
+		{ID: "direnv", Name: "direnv", ShellHook: "required"},
 		{ID: "jq", Name: "jq", ShellHook: "none"},
 	})
 
-	if len(suggestions) != 2 {
-		t.Fatalf("len(Suggestions()) = %d, want 2", len(suggestions))
+	if len(suggestions) != 1 {
+		t.Fatalf("len(Suggestions()) = %d, want 1", len(suggestions))
 	}
 
-	if suggestions[0].InitLine != "eval \"$(zoxide init zsh)\"" {
+	if suggestions[0].InitLine != "eval \"$(direnv hook zsh)\"" {
 		t.Fatalf("suggestions[0].InitLine = %q", suggestions[0].InitLine)
 	}
 }
@@ -93,11 +92,11 @@ func TestMarkDeclinedSuggestions(t *testing.T) {
 	t.Parallel()
 
 	var st state.State
-	MarkDeclinedSuggestions([]Suggestion{{ToolID: "zoxide"}}, &st)
+	MarkDeclinedSuggestions([]Suggestion{{ToolID: "direnv"}}, &st)
 
-	receipt, ok := st.Tool("zoxide")
+	receipt, ok := st.Tool("direnv")
 	if !ok {
-		t.Fatal("state.Tool(\"zoxide\") did not find a receipt")
+		t.Fatal("state.Tool(\"direnv\") did not find a receipt")
 	}
 
 	if receipt.ShellHookStatus != shellHookDeclined {

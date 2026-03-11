@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/ametel01/agents-toolbelt/internal/catalog"
 	"github.com/ametel01/agents-toolbelt/internal/discovery"
@@ -26,6 +27,10 @@ import (
 var errNoSupportedPackageManagers = errors.New("no supported package managers detected")
 
 type liveVerifier struct{}
+
+type toolVerifier interface {
+	Check(context.Context, catalog.Tool) (verify.VerifyResult, error)
+}
 
 func (liveVerifier) Check(ctx context.Context, tool catalog.Tool) (verify.VerifyResult, error) {
 	result, err := verify.Check(ctx, tool, verify.ExecExecutor{})
@@ -82,12 +87,8 @@ func runInstall(ctx context.Context, stdout, stderr io.Writer, yes bool) error {
 		return wrapError("apply shell workflow", err)
 	}
 
-	if err := state.Save(stateData); err != nil {
-		return wrapError("save state", err)
-	}
-
-	if err := writeSkillFile(registry, stateData); err != nil {
-		return wrapError("write skill file", err)
+	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}); err != nil {
+		return err
 	}
 
 	renderSummary(stdout, "install", summary)
@@ -214,11 +215,16 @@ func runUpdate(ctx context.Context, stdout, stderr io.Writer, toolID string) err
 		return wrapError("execute update plan", err)
 	}
 
+	verified, err := refreshVerifiedTools(ctx, registry, &stateData, liveVerifier{})
+	if err != nil {
+		return wrapError("refresh verified tools", err)
+	}
+
 	if err := state.Save(stateData); err != nil {
 		return wrapError("save state", err)
 	}
 
-	if err := writeSkillFile(registry, stateData); err != nil {
+	if err := writeSkillFile(verified); err != nil {
 		return wrapError("write skill file", err)
 	}
 
@@ -258,11 +264,16 @@ func runUninstall(ctx context.Context, stdout, stderr io.Writer, toolIDs []strin
 		return wrapError("execute uninstall plan", err)
 	}
 
+	verified, err := refreshVerifiedTools(ctx, registry, &stateData, liveVerifier{})
+	if err != nil {
+		return wrapError("refresh verified tools", err)
+	}
+
 	if err := state.Save(stateData); err != nil {
 		return wrapError("save state", err)
 	}
 
-	if err := writeSkillFile(registry, stateData); err != nil {
+	if err := writeSkillFile(verified); err != nil {
 		return wrapError("write skill file", err)
 	}
 
@@ -362,28 +373,100 @@ func selectTools(registry catalog.Registry, snapshot discovery.Snapshot, yes boo
 	return selected, nil
 }
 
-func writeSkillFile(registry catalog.Registry, st state.State) error {
-	content := skill.Generate(verifiedTools(registry, st))
+func writeSkillFile(tools []catalog.Tool) error {
+	content := skill.Generate(tools)
 
 	return wrapError("persist cli-tools skill", skill.Write(content, skill.DefaultPaths()))
 }
 
-func verifiedTools(registry catalog.Registry, st state.State) []catalog.Tool {
-	tools := make([]catalog.Tool, 0, len(st.Tools))
-	for toolID, receipt := range st.Tools {
-		if !receipt.LastVerifyOK {
-			continue
-		}
-
-		tool, ok := registry.ByID(toolID)
-		if !ok {
-			continue
-		}
-
-		tools = append(tools, tool)
+func persistVerifiedSkill(
+	ctx context.Context,
+	registry catalog.Registry,
+	st *state.State,
+	verifier toolVerifier,
+) error {
+	verified, err := refreshVerifiedTools(ctx, registry, st, verifier)
+	if err != nil {
+		return wrapError("refresh verified tools", err)
 	}
 
-	return tools
+	if err := state.Save(*st); err != nil {
+		return wrapError("save state", err)
+	}
+
+	if err := writeSkillFile(verified); err != nil {
+		return wrapError("write skill file", err)
+	}
+
+	return nil
+}
+
+func refreshVerifiedTools(
+	ctx context.Context,
+	registry catalog.Registry,
+	st *state.State,
+	verifier toolVerifier,
+) ([]catalog.Tool, error) {
+	snapshot, err := buildSnapshot(registry, *st)
+	if err != nil {
+		return nil, wrapError("build discovery snapshot", err)
+	}
+
+	verified := make([]catalog.Tool, 0, len(snapshot.Tools))
+	for _, tool := range registry.Tools() {
+		presence := snapshot.Tools[tool.ID]
+		if !presence.Installed {
+			if presence.Receipt != nil {
+				receipt := *presence.Receipt
+				receipt.BinaryPath = ""
+				receipt.LastVerifyAt = time.Now().UTC()
+				receipt.LastVerifyOK = false
+				receipt.LastVerifyError = "binary not found"
+				if err := st.SetTool(receipt); err != nil {
+					return nil, wrapError("persist missing tool state", err)
+				}
+			}
+
+			continue
+		}
+
+		receipt := toolStateForPresence(presence)
+		receipt.Bin = tool.Bin
+		receipt.BinaryPath = presence.Path
+
+		result, verifyErr := verifier.Check(ctx, tool)
+		receipt.LastVerifyAt = result.CheckedAt
+		receipt.LastVerifyOK = result.Verified
+		receipt.LastVerifyError = result.Error
+		receipt.Version = result.Version
+		if verifyErr != nil {
+			receipt.LastVerifyOK = false
+			receipt.LastVerifyError = verifyErr.Error()
+		}
+
+		if err := st.SetTool(receipt); err != nil {
+			return nil, wrapError("persist tool verification state", err)
+		}
+
+		if verifyErr == nil && result.Verified {
+			verified = append(verified, tool)
+		}
+	}
+
+	return verified, nil
+}
+
+func toolStateForPresence(presence discovery.ToolPresence) state.ToolState {
+	if presence.Receipt != nil {
+		return *presence.Receipt
+	}
+
+	return state.ToolState{
+		ToolID:     presence.Tool.ID,
+		Bin:        presence.Tool.Bin,
+		Ownership:  state.OwnershipExternal,
+		BinaryPath: presence.Path,
+	}
 }
 
 func renderSummary(stdout io.Writer, action string, summary plan.Summary) {

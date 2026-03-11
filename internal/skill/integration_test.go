@@ -16,13 +16,13 @@ func TestGenerateFromRealCatalogSubset(t *testing.T) {
 	}
 
 	tools := []catalog.Tool{
-		mustTool(t, registry, "fzf"),
+		mustTool(t, registry, "rg"),
 		mustTool(t, registry, "jq"),
 		mustTool(t, registry, "direnv"),
 	}
 
 	content := Generate(tools)
-	if !strings.Contains(content, "`fzf`") || !strings.Contains(content, "`jq`") || !strings.Contains(content, "`direnv`") {
+	if !strings.Contains(content, "`rg`") || !strings.Contains(content, "`jq`") || !strings.Contains(content, "`direnv`") {
 		t.Fatalf("Generate() output did not contain expected tools:\n%s", content)
 	}
 }

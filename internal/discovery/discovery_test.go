@@ -50,7 +50,7 @@ func TestScanPATH(t *testing.T) {
 func TestScanPATHUnexpectedError(t *testing.T) {
 	t.Parallel()
 
-	tools := []catalog.Tool{{ID: "fzf", Bin: "fzf"}}
+	tools := []catalog.Tool{{ID: "rg", Bin: "rg"}}
 
 	_, err := ScanPATH(tools, func(string) (string, error) {
 		return "", errLookupFailed
@@ -70,27 +70,27 @@ func TestReconcile(t *testing.T) {
 
 	stateData := state.State{
 		Tools: map[string]state.ToolState{
-			"fzf": {
-				ToolID:    "fzf",
-				Bin:       "fzf",
+			"rg": {
+				ToolID:    "rg",
+				Bin:       "rg",
 				Ownership: OwnershipManaged,
 			},
-			"bat": {
-				ToolID:    "bat",
-				Bin:       "bat",
+			"jq": {
+				ToolID:    "jq",
+				Bin:       "jq",
 				Ownership: OwnershipManaged,
 			},
 		},
 	}
 
 	snapshot := Reconcile(registry, stateData, map[string]string{
-		"fzf": "/usr/bin/fzf",
-		"jq":  "/usr/bin/jq",
+		"rg": "/usr/bin/rg",
+		"yq": "/usr/bin/yq",
 	})
 
-	assertPresence(t, snapshot.Tools["fzf"], true, OwnershipManaged)
-	assertPresence(t, snapshot.Tools["jq"], true, OwnershipExternal)
-	assertPresence(t, snapshot.Tools["bat"], false, OwnershipManaged)
+	assertPresence(t, snapshot.Tools["rg"], true, OwnershipManaged)
+	assertPresence(t, snapshot.Tools["yq"], true, OwnershipExternal)
+	assertPresence(t, snapshot.Tools["jq"], false, OwnershipManaged)
 }
 
 func TestReconcileMissingStateStillBuildsSnapshot(t *testing.T) {
@@ -102,11 +102,11 @@ func TestReconcileMissingStateStillBuildsSnapshot(t *testing.T) {
 	}
 
 	snapshot := Reconcile(registry, state.State{}, map[string]string{
-		"fzf": "/usr/bin/fzf",
+		"rg": "/usr/bin/rg",
 	})
 
-	assertPresence(t, snapshot.Tools["fzf"], true, OwnershipExternal)
-	assertPresence(t, snapshot.Tools["bat"], false, OwnershipMissing)
+	assertPresence(t, snapshot.Tools["rg"], true, OwnershipExternal)
+	assertPresence(t, snapshot.Tools["jq"], false, OwnershipMissing)
 }
 
 func assertPresence(t *testing.T, got ToolPresence, wantInstalled bool, wantOwnership string) {

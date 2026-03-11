@@ -10,13 +10,16 @@ description: >-
 
 ## Available Tools
 
-### Navigation
-- `fzf`
+### Source Control / Forge
+- `gh`
 
-### File Viewing
-- `bat`
+### Search
+- `rg`
 
-### JSON / YAML
+### Filesystem
+- `fd`
+
+### Structured Data
 - `jq`
 - `yq`
 

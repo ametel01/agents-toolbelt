@@ -12,12 +12,13 @@ func TestGenerateGolden(t *testing.T) {
 	t.Parallel()
 
 	tools := []catalog.Tool{
-		{Bin: "fzf", Category: "navigation", SkillExpose: true},
-		{Bin: "bat", Category: "file_viewing", SkillExpose: true},
+		{Bin: "gh", Category: "forge", SkillExpose: true},
+		{Bin: "rg", Category: "search", SkillExpose: true},
+		{Bin: "fd", Category: "filesystem", SkillExpose: true},
 		{Bin: "jq", Category: "json", SkillExpose: true},
 		{Bin: "yq", Category: "yaml", SkillExpose: true},
 		{Bin: "direnv", Category: "env_management", SkillExpose: true},
-		{Bin: "hidden", Category: "navigation", SkillExpose: false},
+		{Bin: "hidden", Category: "search", SkillExpose: false},
 	}
 
 	got := Generate(tools)

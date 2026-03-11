@@ -14,7 +14,7 @@ func TestBuildInstallPlanOrdersByTier(t *testing.T) {
 	t.Parallel()
 
 	registry := mustLoadRegistry(t)
-	selected := mustSelectTools(t, registry, "k9s", "fzf", "starship")
+	selected := mustSelectTools(t, registry, "terraform", "rg", "uv")
 
 	plan, err := BuildInstallPlan(selected, discovery.Snapshot{Tools: map[string]discovery.ToolPresence{}}, []pkgmgr.Manager{
 		fakeManager{name: "brew"},
@@ -27,8 +27,8 @@ func TestBuildInstallPlanOrdersByTier(t *testing.T) {
 		t.Fatalf("len(plan.Actions) = %d, want 3", len(plan.Actions))
 	}
 
-	if plan.Actions[0].Tool.ID != "fzf" || plan.Actions[1].Tool.ID != "starship" || plan.Actions[2].Tool.ID != "k9s" {
-		t.Fatalf("plan.Actions order = [%s %s %s], want [fzf starship k9s]",
+	if plan.Actions[0].Tool.ID != "rg" || plan.Actions[1].Tool.ID != "uv" || plan.Actions[2].Tool.ID != "terraform" {
+		t.Fatalf("plan.Actions order = [%s %s %s], want [rg uv terraform]",
 			plan.Actions[0].Tool.ID,
 			plan.Actions[1].Tool.ID,
 			plan.Actions[2].Tool.ID,
@@ -40,20 +40,20 @@ func TestBuildInstallPlanAlreadyInstalled(t *testing.T) {
 	t.Parallel()
 
 	registry := mustLoadRegistry(t)
-	selected := mustSelectTools(t, registry, "fzf", "bat")
+	selected := mustSelectTools(t, registry, "rg", "jq")
 	snapshot := discovery.Snapshot{
 		Tools: map[string]discovery.ToolPresence{
-			"fzf": {
+			"rg": {
 				Tool:      selected[0],
 				Installed: true,
 				Ownership: discovery.OwnershipExternal,
 			},
-			"bat": {
+			"jq": {
 				Tool:      selected[1],
 				Installed: true,
 				Ownership: discovery.OwnershipManaged,
 				Receipt: &state.ToolState{
-					ToolID:    "bat",
+					ToolID:    "jq",
 					Ownership: state.OwnershipManaged,
 				},
 			},
@@ -76,7 +76,7 @@ func TestBuildInstallPlanNoMatchingManager(t *testing.T) {
 	t.Parallel()
 
 	registry := mustLoadRegistry(t)
-	selected := mustSelectTools(t, registry, "fzf")
+	selected := mustSelectTools(t, registry, "rg")
 
 	plan, err := BuildInstallPlan(selected, discovery.Snapshot{Tools: map[string]discovery.ToolPresence{}}, []pkgmgr.Manager{
 		fakeManager{name: "pipx"},
@@ -94,16 +94,16 @@ func TestBuildUpdatePlanManagedOnly(t *testing.T) {
 	t.Parallel()
 
 	registry := mustLoadRegistry(t)
-	fzf := mustTool(t, registry, "fzf")
+	rg := mustTool(t, registry, "rg")
 	uv := mustTool(t, registry, "uv")
 
 	snapshot := discovery.Snapshot{
 		Tools: map[string]discovery.ToolPresence{
-			"fzf": {
-				Tool:      fzf,
+			"rg": {
+				Tool:      rg,
 				Ownership: state.OwnershipManaged,
 				Receipt: &state.ToolState{
-					ToolID:         "fzf",
+					ToolID:         "rg",
 					Ownership:      state.OwnershipManaged,
 					InstallManager: "brew",
 				},
@@ -124,8 +124,45 @@ func TestBuildUpdatePlanManagedOnly(t *testing.T) {
 		t.Fatalf("len(plan.Actions) = %d, want 1", len(plan.Actions))
 	}
 
-	if plan.Actions[0].Tool.ID != "fzf" || plan.Actions[0].Type != ActionUpdate {
-		t.Fatalf("plan.Actions[0] = %#v, want fzf update action", plan.Actions[0])
+	if plan.Actions[0].Tool.ID != "rg" || plan.Actions[0].Type != ActionUpdate {
+		t.Fatalf("plan.Actions[0] = %#v, want rg update action", plan.Actions[0])
+	}
+}
+
+func TestBuildUpdatePlanUsesRecordedInstallManager(t *testing.T) {
+	t.Parallel()
+
+	registry := mustLoadRegistry(t)
+	rg := mustTool(t, registry, "rg")
+
+	snapshot := discovery.Snapshot{
+		Tools: map[string]discovery.ToolPresence{
+			"rg": {
+				Tool:      rg,
+				Ownership: state.OwnershipManaged,
+				Receipt: &state.ToolState{
+					ToolID:         "rg",
+					Ownership:      state.OwnershipManaged,
+					InstallManager: "apt",
+				},
+			},
+		},
+	}
+
+	plan, err := BuildUpdatePlan(snapshot, []pkgmgr.Manager{
+		fakeManager{name: "brew"},
+		fakeManager{name: "apt"},
+	}, "")
+	if err != nil {
+		t.Fatalf("BuildUpdatePlan() error = %v", err)
+	}
+
+	if len(plan.Actions) != 1 {
+		t.Fatalf("len(plan.Actions) = %d, want 1", len(plan.Actions))
+	}
+
+	if plan.Actions[0].Method.Manager != "apt" {
+		t.Fatalf("plan.Actions[0].Method.Manager = %q, want %q", plan.Actions[0].Method.Manager, "apt")
 	}
 }
 
@@ -133,18 +170,18 @@ func TestBuildUninstallPlanRefusesExternalTools(t *testing.T) {
 	t.Parallel()
 
 	registry := mustLoadRegistry(t)
-	fzf := mustTool(t, registry, "fzf")
+	rg := mustTool(t, registry, "rg")
 
 	snapshot := discovery.Snapshot{
 		Tools: map[string]discovery.ToolPresence{
-			"fzf": {
-				Tool:      fzf,
+			"rg": {
+				Tool:      rg,
 				Ownership: state.OwnershipExternal,
 			},
 		},
 	}
 
-	plan, err := BuildUninstallPlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, []string{"fzf"}, false)
+	plan, err := BuildUninstallPlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, []string{"rg"}, false)
 	if err != nil {
 		t.Fatalf("BuildUninstallPlan() error = %v", err)
 	}
@@ -158,15 +195,15 @@ func TestBuildUninstallPlanManagedTool(t *testing.T) {
 	t.Parallel()
 
 	registry := mustLoadRegistry(t)
-	fzf := mustTool(t, registry, "fzf")
+	rg := mustTool(t, registry, "rg")
 
 	snapshot := discovery.Snapshot{
 		Tools: map[string]discovery.ToolPresence{
-			"fzf": {
-				Tool:      fzf,
+			"rg": {
+				Tool:      rg,
 				Ownership: state.OwnershipManaged,
 				Receipt: &state.ToolState{
-					ToolID:         "fzf",
+					ToolID:         "rg",
 					Ownership:      state.OwnershipManaged,
 					InstallManager: "brew",
 				},
@@ -174,7 +211,7 @@ func TestBuildUninstallPlanManagedTool(t *testing.T) {
 		},
 	}
 
-	plan, err := BuildUninstallPlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, []string{"fzf"}, false)
+	plan, err := BuildUninstallPlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, []string{"rg"}, false)
 	if err != nil {
 		t.Fatalf("BuildUninstallPlan() error = %v", err)
 	}

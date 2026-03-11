@@ -137,14 +137,8 @@ func appendInitLine(path, initLine string) error {
 
 func initLineForTool(toolID, shellName string) (string, bool) {
 	switch toolID {
-	case "zoxide":
-		return shellInit(shellName, "zoxide", "init"), true
-	case "atuin":
-		return shellInit(shellName, "atuin", "init"), true
 	case "direnv":
 		return shellInit(shellName, "direnv", "hook"), true
-	case "starship":
-		return shellInit(shellName, "starship", "init"), true
 	default:
 		return "", false
 	}
