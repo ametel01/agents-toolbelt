@@ -1,10 +1,14 @@
 # agents-toolbelt (`atb`)
 
-**One installer for the CLI tools modern developers actually use.**
+**Install the CLI toolbelt that autonomous and semi-autonomous coding agents need to do real work.**
 
-`atb` is an interactive command-line tool that installs and manages a curated set of productivity-focused CLI utilities commonly used in coding workflows and AI-assisted development.
+`atb` is a command-line installer and manager for the utilities AI coding agents depend on: code search tools, file discovery tools, JSON and YAML processors, API clients, text transformation tools, runtime managers, task runners, and infrastructure CLIs.
 
-Instead of manually discovering, installing, and configuring dozens of tools across different package managers, `atb` provides a **single, organized installer** that sets them up in one place.
+It is built on a simple assumption:
+
+**coding agents work best when they are given broad, verified access to the tools they need, not a thin environment with missing binaries and constant operational friction.**
+
+Instead of hand-assembling that environment across different package managers and machines, `atb` installs and manages it from one place.
 
 ---
 
@@ -44,45 +48,64 @@ Manual release downloads are also available at:
 
 ## Why `atb` exists
 
-Modern development environments often depend on many small command-line tools:
+Autonomous coding agents are only as capable as the environment they are dropped into.
 
-* navigation and fuzzy search tools
-* better file viewers and diff tools
-* JSON and API utilities
-* environment managers
-* task runners and workflow helpers
+If an agent cannot search quickly, inspect files clearly, query APIs, parse structured output, compare changes, or move through a repository efficiently, it slows down or fails outright. In practice, many agent sessions start in incomplete environments where the necessary CLI tools are missing, inconsistently installed, or spread across different package managers.
 
-Setting these up manually can be tedious and inconsistent across machines.
+`atb` exists to solve that problem.
 
-`atb` solves this by providing:
+It gives you:
 
-* a **curated catalog of useful CLI tools**
-* a **fast interactive installer**
-* **automatic platform detection**
-* **safe installation and verification**
-* a **single inventory of installed tools**
+* a curated catalog of CLI tools useful to coding agents
+* a fast installer for assembling that toolbelt on a fresh machine
+* automatic platform and package-manager detection
+* post-install verification so the environment is actually usable
+* a machine-readable inventory of what is available
 
-Once installed, your terminal environment is ready for productive coding and automation.
+The goal is not minimalism. The goal is operational completeness.
+
+---
+
+## Built for coding agents
+
+`atb` is designed for environments where agents such as **Claude Code** or **Codex** are expected to act with a high degree of autonomy.
+
+The underlying assumption is straightforward:
+
+* agents perform better when they have complete tool access
+* verified local binaries are better than implicit assumptions
+* fewer operational constraints means less wasted agent effort
+* a well-equipped terminal is a prerequisite for strong agent performance
+
+After installation, `atb` automatically generates a **`cli-tools` skill** that lists the verified CLI tools available on the machine.
+
+This gives the agent immediate visibility into:
+
+* which binaries exist
+* how tools are grouped by category
+* what is actually available right now, not what someone assumes is installed
+
+The generated skill is intentionally minimal. It is there to expose capability, not to bury the agent in tutorials.
 
 ---
 
 ## What `atb` does
 
-`atb` installs and manages a curated set of CLI tools designed to improve everyday terminal workflows.
+`atb` installs and manages a curated set of CLI tools that expand what coding agents can do in a terminal session.
 
 It provides:
 
 ### Interactive installation
 
-Run a single command to open a terminal UI where you can browse and select tools by category.
+Run one command to open a terminal UI where you can browse and select tools by category.
 
-Tools are grouped and prioritized so you can install what you want quickly:
+Tools are grouped and prioritized so you can assemble a useful default environment quickly:
 
 * **Must have** tools are preselected
 * **Should have** tools are optional
 * **Nice to have** tools are hidden until expanded
 
-You remain in control of exactly what gets installed.
+This lets you provision a strong baseline fast while keeping control over what gets installed.
 
 ---
 
@@ -95,54 +118,36 @@ Supported environments include:
 * macOS
 * Linux
 
-Package managers are automatically discovered (for example `brew`, `apt`, `dnf`, or `pacman`) and used when available.
+Package managers are automatically discovered, including `brew`, `apt`, `dnf`, and `pacman` when available.
 
 ---
 
-### Safe installs and verification
+### Verification after install
 
-Every tool installation is verified after it completes.
+Every installation is verified after it completes.
 
-`atb` checks that the binary is available and working before adding it to your environment.
-If an installation fails, the process continues and reports the failure at the end.
+`atb` checks that the binary is actually available and working before recording it as usable. If an installation fails, the process continues and reports the failure at the end.
 
-Existing tools already installed on your system are detected automatically and reused.
+Existing tools already present on your system are detected automatically and reused.
 
 ---
 
-### A clean inventory of available tools
+### Inventory and machine state
 
 `atb` keeps track of which tools are installed and which ones it manages.
 
-You can always see your environment with:
+You can inspect the current environment with:
 
-```
+```bash
 atb status
 ```
 
-This provides a simple overview of:
+This provides a clear overview of:
 
 * installed tools
-* their location on your system
+* binary locations
 * whether they were installed by `atb` or already existed
-
----
-
-### Built for coding agents
-
-Many developers now work with coding agents such as **Claude Code** or **Codex**.
-
-`atb` automatically generates a **`cli-tools` skill** that lists the verified CLI tools available on your machine.
-
-This allows agents to understand which tools exist in your environment without needing configuration.
-
-The generated skill contains:
-
-* the list of available binaries
-* grouped by category
-* no tutorials or command documentation
-
-This keeps the skill minimal while allowing agents to leverage your installed tools effectively.
+* the last recorded verification state
 
 ---
 
@@ -150,7 +155,7 @@ This keeps the skill minimal while allowing agents to leverage your installed to
 
 A typical setup looks like this:
 
-```
+```bash
 atb install
 ```
 
@@ -163,7 +168,7 @@ After installation finishes, `atb`:
 3. generates the `cli-tools` skill
 4. suggests optional shell integrations when needed
 
-Once complete, your terminal environment is ready to use.
+Once complete, the machine is ready to support agent-driven coding work with a broader and more reliable CLI surface area.
 
 ---
 
@@ -171,37 +176,37 @@ Once complete, your terminal environment is ready to use.
 
 Install tools interactively:
 
-```
+```bash
 atb install
 ```
 
 Install recommended tools without prompts:
 
-```
+```bash
 atb install -y
 ```
 
 Check the status of installed tools:
 
-```
+```bash
 atb status
 ```
 
 View the available tool catalog:
 
-```
+```bash
 atb catalog
 ```
 
 Update tools installed by `atb`:
 
-```
+```bash
 atb update
 ```
 
 Uninstall tools managed by `atb`:
 
-```
+```bash
 atb uninstall <tool>
 ```
 
@@ -209,11 +214,11 @@ atb uninstall <tool>
 
 ## Operational usage
 
-These are the core commands users will run after `atb` is installed.
+These are the core commands used after `atb` is installed.
 
 ### Browse the available catalog
 
-```
+```bash
 atb catalog
 ```
 
@@ -221,7 +226,7 @@ Use this to inspect the embedded tool catalog, including tier, category, and cur
 
 ### Inspect the current machine state
 
-```
+```bash
 atb status
 ```
 
@@ -234,7 +239,7 @@ This shows:
 
 ### Install in interactive mode
 
-```
+```bash
 atb install
 ```
 
@@ -246,7 +251,7 @@ This opens the terminal picker so users can:
 
 ### Install defaults without prompts
 
-```
+```bash
 atb install -y
 ```
 
@@ -254,27 +259,27 @@ This runs in headless mode and installs the tools marked as default selections f
 
 ### Update tools managed by `atb`
 
-```
+```bash
 atb update
 ```
 
 To update one managed tool only:
 
-```
-atb update fzf
+```bash
+atb update rg
 ```
 
 `atb update` does not update tools that are merely detected on `PATH` without an `atb` receipt.
 
 ### Uninstall tools managed by `atb`
 
-```
-atb uninstall fzf
+```bash
+atb uninstall rg
 ```
 
 To remove all managed tools:
 
-```
+```bash
 atb uninstall --all
 ```
 
@@ -282,7 +287,7 @@ atb uninstall --all
 
 ### Shell integration behavior
 
-Some tools such as `zoxide`, `direnv`, `atuin`, and `starship` can add shell initialization lines.
+Some tools such as `direnv` can add shell initialization lines.
 
 `atb` can:
 
@@ -296,14 +301,18 @@ It does **not** modify shell rc files without explicit confirmation.
 
 ## Philosophy
 
-`atb` focuses on a simple idea:
+`atb` is built around a clear operating model:
 
-**make powerful CLI tools easy to discover, install, and use.**
+**if you want strong coding-agent performance, give the agent a complete and verified CLI environment.**
 
-It does not replace those tools or change how they work.
-It simply gives you a clean way to install and manage them from one place.
+That means:
 
-The result is a faster, more consistent development environment across machines.
+* more available tools
+* fewer missing dependencies
+* less time wasted on environment friction
+* better odds that the agent can complete work end to end
+
+`atb` does not replace those tools or abstract them away. It assembles and manages the toolbelt so agents can use the machine more effectively.
 
 ---
 
@@ -311,8 +320,8 @@ The result is a faster, more consistent development environment across machines.
 
 Run:
 
-```
+```bash
 atb install
 ```
 
-Choose the tools you want, and your CLI environment will be ready in minutes.
+Choose the tools you want, let `atb` verify them, and the machine will be ready for agent-driven coding work in minutes.
