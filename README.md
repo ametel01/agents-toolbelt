@@ -70,6 +70,8 @@ The goal is not minimalism. The goal is operational completeness.
 
 `atb` is designed for environments where agents such as **Claude Code** or **Codex** are expected to act with a high degree of autonomy.
 
+The generated skills are specifically for **Claude Code** and **Codex**. They are not intended as a generic skill format for other agent runtimes.
+
 The underlying assumption is straightforward:
 
 * agents perform better when they have complete tool access
@@ -77,7 +79,7 @@ The underlying assumption is straightforward:
 * fewer operational constraints means less wasted agent effort
 * a well-equipped terminal is a prerequisite for strong agent performance
 
-After installation, `atb` automatically generates a **`cli-tools` skill** that lists the verified CLI tools available on the machine.
+After installation, `atb` automatically generates a **`cli-tools` skill** in the format expected by **Claude Code** and **Codex**, listing the verified CLI tools available on the machine.
 
 This gives the agent immediate visibility into:
 
@@ -165,7 +167,7 @@ After installation finishes, `atb`:
 
 1. verifies each tool
 2. records your tool inventory
-3. generates the `cli-tools` skill
+3. generates the `cli-tools` skill for Claude Code and Codex
 4. suggests optional shell integrations when needed
 
 Once complete, the machine is ready to support agent-driven coding work with a broader and more reliable CLI surface area.
