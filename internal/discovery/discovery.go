@@ -13,9 +13,9 @@ import (
 
 const (
 	// OwnershipManaged identifies tools installed through atb.
-	OwnershipManaged = "managed"
+	OwnershipManaged = state.OwnershipManaged
 	// OwnershipExternal identifies tools found on PATH without an atb receipt.
-	OwnershipExternal = "external"
+	OwnershipExternal = state.OwnershipExternal
 	// OwnershipMissing identifies tools not found on PATH and without any receipt.
 	OwnershipMissing = "missing"
 )

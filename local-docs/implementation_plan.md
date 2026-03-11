@@ -394,6 +394,8 @@ make verify
 
 ## Step 7 — State Management (`internal/state`)
 
+Status: **COMPLETED**
+
 **Goal**: Read/write `~/.config/atb/state.json`, track install receipts and ownership.
 
 **Files to create**:
