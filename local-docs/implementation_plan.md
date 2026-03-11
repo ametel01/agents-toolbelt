@@ -699,6 +699,8 @@ make verify
 
 ## Step 12 — TUI Picker (`internal/tui`)
 
+Status: **COMPLETED**
+
 **Goal**: Interactive bubbletea picker with categories, tiers, search, and toggle.
 
 **Files to create**:
