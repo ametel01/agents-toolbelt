@@ -12,7 +12,7 @@ Status: **COMPLETED**
 **Goal**: Go module compiles, linter runs, `make verify` works on an empty project.
 
 **Files to create**:
-- `go.mod` — module `github.com/ametel01/agents-toolbelt`, go 1.24
+- `go.mod` — module `github.com/ametel01/agents-toolbelt`, go 1.26
 - `cmd/atb/main.go` — minimal `func main()` that prints version
 - `internal/logx/logx.go` — minimal shared logging and user-facing error helpers, expanded in later steps
 - `.gitignore` — Go binaries, vendor, IDE files
@@ -55,7 +55,7 @@ make verify                         # all gates pass (trivially, no code yet)
 ```
 
 **Failure modes**:
-- Go 1.24 not installed → `go version` check in Makefile preamble
+- Go 1.26 not installed → `go version` check in Makefile preamble
 - `staticcheck`/`golangci-lint`/`govulncheck` not installed → document in README or add `tools.go` with `//go:build tools` for tool deps
 
 **CHANGELOG**: Create the file in this step, but do not add an `Unreleased` entry unless the scaffold introduces shipped functional behavior. Changelog entries are for functional or user-visible changes only.
@@ -843,7 +843,7 @@ Status: **COMPLETED**
 **Goal**: GitHub Actions CI runs `make verify` on Linux + macOS. GoReleaser builds releases.
 
 **Files to create**:
-- `.github/workflows/ci.yml` — matrix: [ubuntu-latest, macos-latest] × go 1.24, runs `make verify`
+- `.github/workflows/ci.yml` — matrix: [ubuntu-latest, macos-latest] × go 1.26, runs `make verify`
 - `.github/workflows/release.yml` — triggered on tag push, runs GoReleaser
 
 **CI workflow** (`.github/workflows/ci.yml`):
@@ -865,7 +865,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.26'
       - run: go install honnef.co/go/tools/cmd/staticcheck@latest
       - run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
       - run: go install golang.org/x/vuln/cmd/govulncheck@latest

@@ -14,8 +14,8 @@ verify: check-go fmt vet lint test build vulncheck
 
 check-go:
 	@version="$$( $(GO) env GOVERSION | sed 's/^go//' )"; \
-	if [[ "$$(printf '%s\n1.24\n' "$$version" | sort -V | head -n1)" != "1.24" ]]; then \
-		echo "Go 1.24 or newer is required (found $$version)"; \
+	if [[ "$$(printf '%s\n1.26\n' "$$version" | sort -V | head -n1)" != "1.26" ]]; then \
+		echo "Go 1.26 or newer is required (found $$version)"; \
 		exit 1; \
 	fi
 
