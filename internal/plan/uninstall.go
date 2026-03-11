@@ -85,6 +85,18 @@ func shouldPlanTool(candidate, requested string) bool {
 
 func sortActions(actions []Action) {
 	slices.SortStableFunc(actions, func(left, right Action) int {
-		return compareTier(left.Tool.Tier, right.Tool.Tier)
+		if rank := compareTier(left.Tool.Tier, right.Tool.Tier); rank != 0 {
+			return rank
+		}
+
+		if left.Tool.ID < right.Tool.ID {
+			return -1
+		}
+
+		if left.Tool.ID > right.Tool.ID {
+			return 1
+		}
+
+		return 0
 	})
 }
