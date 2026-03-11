@@ -3,7 +3,9 @@ package plan
 
 import (
 	"errors"
+	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/ametel01/agents-toolbelt/internal/catalog"
 	"github.com/ametel01/agents-toolbelt/internal/discovery"
@@ -81,7 +83,7 @@ func BuildInstallPlan(selected []catalog.Tool, snapshot discovery.Snapshot, mana
 			actions = append(actions, Action{
 				Tool:   tool,
 				Type:   ActionSkip,
-				Reason: err.Error(),
+				Reason: skipReason(tool, err),
 			})
 
 			continue
@@ -96,6 +98,19 @@ func BuildInstallPlan(selected []catalog.Tool, snapshot discovery.Snapshot, mana
 	}
 
 	return Plan{Actions: actions}, nil
+}
+
+func skipReason(tool catalog.Tool, err error) string {
+	if !errors.Is(err, pkgmgr.ErrNoMatchingMethod) || len(tool.InstallMethods) == 0 {
+		return err.Error()
+	}
+
+	managers := make([]string, 0, len(tool.InstallMethods))
+	for _, method := range tool.InstallMethods {
+		managers = append(managers, method.Manager)
+	}
+
+	return fmt.Sprintf("requires %s", strings.Join(managers, " or "))
 }
 
 func compareTier(left, right catalog.Tier) int {
