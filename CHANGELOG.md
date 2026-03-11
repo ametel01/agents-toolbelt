@@ -12,3 +12,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cobra-based CLI skeleton with `install`, `status`, `update`, `uninstall`, and `catalog` subcommands.
 - Embedded 22-tool registry with validation and lookup helpers for catalog-driven workflows.
 - Platform normalization and package-manager detection with selection logic for catalog install methods.
+- PATH discovery and reconciliation primitives that classify catalog tools as managed, external, or missing.

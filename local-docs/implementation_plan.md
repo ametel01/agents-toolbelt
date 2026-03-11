@@ -241,6 +241,8 @@ make verify
 
 ## Step 4 — Discovery & Reconciliation (`internal/discovery`)
 
+Status: **COMPLETED**
+
 **Goal**: Reconcile catalog, PATH detection, and persisted state into a single authoritative runtime view used by all commands.
 
 **Files to create**:
