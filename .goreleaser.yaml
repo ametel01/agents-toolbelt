@@ -3,6 +3,8 @@ version: 2
 builds:
   - main: ./cmd/atb
     binary: atb
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
     goos:
       - linux
       - darwin
