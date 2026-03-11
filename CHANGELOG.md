@@ -16,3 +16,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Safe external command execution with timeout, output capture, and preserved exit codes for non-zero results.
 - Tool verification flow that checks PATH presence, runs verify commands, and extracts versions when available.
 - Persistent state management for ownership receipts, verification metadata, and atomic config writes.
+- Install, update, and uninstall planning for managed versus external tools with tier-aware ordering.

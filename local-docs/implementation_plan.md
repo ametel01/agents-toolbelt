@@ -464,6 +464,8 @@ make verify
 
 ## Step 8 — Install/Update/Uninstall Planning (`internal/plan`)
 
+Status: **COMPLETED**
+
 **Goal**: Given catalog + reconciled discovery snapshot + detected managers, produce ordered plans for install, update, and uninstall.
 
 **Files to create**:
