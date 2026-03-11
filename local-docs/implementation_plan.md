@@ -648,6 +648,8 @@ make verify
 
 ## Step 11 — Shell Integration (`internal/shell`)
 
+Status: **COMPLETED**
+
 **Goal**: Detect user shell, render init-line suggestions, and optionally apply confirmed rc-file edits idempotently for tools that need shell hooks.
 
 **Files to create**:

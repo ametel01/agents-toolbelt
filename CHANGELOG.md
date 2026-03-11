@@ -19,3 +19,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Install, update, and uninstall planning for managed versus external tools with tier-aware ordering.
 - Plan execution that installs, updates, verifies, and uninstalls tools while keeping receipts and summaries consistent.
 - CLI skill generation for Claude Code and Codex based on verified, exposable tool inventory.
+- Shell hook suggestion and idempotent rc-file application support for tools that need initialization.
