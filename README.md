@@ -51,7 +51,7 @@ source ~/.bashrc
 To install a specific release tag instead of the latest:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ametel01/agents-toolbelt/main/scripts/install.sh | ATB_VERSION="v0.1.0" bash
+curl -fsSL https://raw.githubusercontent.com/ametel01/agents-toolbelt/main/scripts/install.sh | ATB_VERSION="v0.2.0" bash
 ```
 
 Verify the installation:

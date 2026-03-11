@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.2.0] - 2026-03-12
+
+### Added
+- Embedded 8 additional catalog tools for coding-agent workflows: `tree`, `bat`, `delta`, `watchexec`, `tokei`, `difftastic`, `xsv`, and `semgrep`.
+- Coverage in `internal/catalog` tests that asserts every registry category has a corresponding human-readable category label.
+
+### Changed
+- Catalog category labels now cover the new `code_stats`, `csv`, and `git_tools` groupings introduced by the expanded registry.
+- Cargo-based install and update commands for `hyperfine` and `mise` now use `cargo install --locked` for more reproducible installs.
+
 ## [0.1.0] - 2026-03-11
 
 ### Added
