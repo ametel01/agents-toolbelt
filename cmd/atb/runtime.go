@@ -104,7 +104,16 @@ func runInstall(ctx context.Context, stdout, stderr io.Writer, yes bool) error {
 		return wrapError("apply shell workflow", err)
 	}
 
-	if err := persistVerifiedSkill(ctx, installCtx.registry, &installCtx.stateData, liveVerifier{}, stdout); err != nil {
+	targets, err := selectTargets(yes)
+	if err != nil {
+		return wrapError("select skill targets", err)
+	}
+
+	if len(targets) == 0 {
+		if _, writeErr := fmt.Fprintln(stdout, "Skill generation skipped."); writeErr != nil {
+			return wrapError("write skip message", writeErr)
+		}
+	} else if err := persistVerifiedSkill(ctx, installCtx.registry, &installCtx.stateData, liveVerifier{}, stdout, targets); err != nil {
 		return wrapError("persist verified skill", err)
 	}
 
@@ -280,7 +289,7 @@ func runUpdate(ctx context.Context, stdout, stderr io.Writer, toolID string) err
 		return wrapError("execute update plan", err)
 	}
 
-	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout); err != nil {
+	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, skill.AllTargets()); err != nil {
 		return wrapError("persist verified skill", err)
 	}
 
@@ -328,7 +337,7 @@ func runUninstall(ctx context.Context, stdout, stderr io.Writer, toolIDs []strin
 		return wrapError("execute uninstall plan", err)
 	}
 
-	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout); err != nil {
+	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, skill.AllTargets()); err != nil {
 		return wrapError("persist verified skill", err)
 	}
 
@@ -428,15 +437,17 @@ func selectTools(registry catalog.Registry, snapshot discovery.Snapshot, yes boo
 	return selected, nil
 }
 
-func writeSkillFile(tools []catalog.Tool) error {
-	content := skill.Generate(tools)
-
-	paths, err := skill.DefaultPaths()
-	if err != nil {
-		return wrapError("resolve skill paths", err)
+func selectTargets(yes bool) ([]skill.Target, error) {
+	if yes {
+		return skill.AllTargets(), nil
 	}
 
-	return wrapError("persist cli-tools skill", skill.Write(content, paths))
+	selected, err := tui.RunTargetPicker(skill.AllTargets())
+	if err != nil {
+		return nil, wrapError("run target picker", err)
+	}
+
+	return selected, nil
 }
 
 func persistVerifiedSkill(
@@ -445,13 +456,14 @@ func persistVerifiedSkill(
 	st *state.State,
 	verifier toolVerifier,
 	stdout io.Writer,
+	targets []skill.Target,
 ) error {
 	verified, err := refreshVerifiedTools(ctx, registry, st, verifier)
 	if err != nil {
 		return wrapError("refresh verified tools", err)
 	}
 
-	paths, err := skill.DefaultPaths()
+	paths, err := skill.PathsForTargets(targets)
 	if err != nil {
 		return wrapError("resolve skill paths", err)
 	}
@@ -469,7 +481,8 @@ func persistVerifiedSkill(
 		return wrapError("save state", err)
 	}
 
-	if err := writeSkillFile(verified); err != nil {
+	content := skill.Generate(verified)
+	if err := skill.Write(content, paths); err != nil {
 		return wrapError("write skill file", err)
 	}
 

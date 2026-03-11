@@ -96,19 +96,6 @@ func Write(content string, paths []string) error {
 	return nil
 }
 
-// DefaultPaths returns the standard cli-tools skill destinations for Claude Code and Codex.
-func DefaultPaths() ([]string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("resolve user home dir: %w", err)
-	}
-
-	return []string{
-		filepath.Join(homeDir, ".claude", "skills", "cli-tools", "SKILL.md"),
-		filepath.Join(homeDir, ".agents", "skills", "cli-tools", "SKILL.md"),
-	}, nil
-}
-
 func orderedCategories(grouped map[string][]string) []string {
 	ordered := make([]string, 0, len(grouped))
 	seen := make(map[string]struct{}, len(grouped))
