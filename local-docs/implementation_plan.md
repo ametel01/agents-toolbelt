@@ -188,6 +188,8 @@ make verify
 
 ## Step 3 — Platform & Package Manager Detection (`internal/pkgmgr`)
 
+Status: **COMPLETED**
+
 **Goal**: Detect OS/arch and available package managers, pick best match for a tool.
 
 **Files to create**:
