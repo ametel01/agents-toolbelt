@@ -586,6 +586,8 @@ make verify
 
 ## Step 10 — Skill Generation (`internal/skill`)
 
+Status: **COMPLETED**
+
 **Goal**: Generate `SKILL.md` to both Claude Code and Codex paths from verified tools.
 
 **Files to create**:
