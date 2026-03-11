@@ -17,3 +17,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tool verification flow that checks PATH presence, runs verify commands, and extracts versions when available.
 - Persistent state management for ownership receipts, verification metadata, and atomic config writes.
 - Install, update, and uninstall planning for managed versus external tools with tier-aware ordering.
+- Plan execution that installs, updates, verifies, and uninstalls tools while keeping receipts and summaries consistent.

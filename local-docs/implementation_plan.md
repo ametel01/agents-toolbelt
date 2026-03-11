@@ -531,6 +531,8 @@ make verify
 
 ## Step 9 — Plan Execution (Install/Update/Uninstall)
 
+Status: **COMPLETED**
+
 **Goal**: Execute a plan: install tools, verify, update state.
 
 **Files to create**:
