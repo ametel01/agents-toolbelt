@@ -8,7 +8,13 @@ GOVULNCHECK := $(TOOLS_BIN)/govulncheck
 export GOBIN := $(TOOLS_BIN)
 export PATH := $(TOOLS_BIN):$(PATH)
 
-.PHONY: help verify fmt vet lint test build vulncheck tools check-go
+.PHONY: help verify fmt vet lint test build run vulncheck tools check-go
+
+RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+
+ifneq ($(filter run,$(MAKECMDGOALS)),)
+$(eval $(RUN_ARGS):;@:)
+endif
 
 help:
 	@printf "Available targets:\n"
@@ -19,6 +25,7 @@ help:
 	@printf "  lint       Run staticcheck and golangci-lint\n"
 	@printf "  test       Run unit tests and race tests\n"
 	@printf "  build      Build all packages\n"
+	@printf "  run        Run the atb CLI with go run (use 'make run update' or ARGS='...')\n"
 	@printf "  vulncheck  Run govulncheck\n"
 	@printf "  tools      Install local toolchain dependencies into .tools/bin\n"
 
@@ -51,6 +58,9 @@ test:
 
 build:
 	@$(GO) build ./...
+
+run:
+	@$(GO) run ./cmd/atb $(if $(ARGS),$(ARGS),$(RUN_ARGS))
 
 vulncheck: tools
 	@$(GOVULNCHECK) ./...
