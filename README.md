@@ -101,7 +101,7 @@ Run one command to open a terminal UI where you can browse and select tools by c
 
 Tools are grouped and prioritized so you can assemble a useful default environment quickly:
 
-* **Must have** tools are preselected
+* **Must have** tools are highlighted as the recommended baseline
 * **Should have** tools are optional
 * **Nice to have** tools are hidden until expanded
 
@@ -245,7 +245,7 @@ atb install
 
 This opens the terminal picker so users can:
 
-* keep `must` tools preselected
+* review the recommended `must` tools
 * optionally add `should` tools
 * expand and choose `nice` tools
 

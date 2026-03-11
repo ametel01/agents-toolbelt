@@ -13,7 +13,7 @@ import (
 type Tier string
 
 const (
-	// TierMust marks tools that should be preselected in the installer.
+	// TierMust marks tools that represent the recommended baseline.
 	TierMust Tier = "must"
 	// TierShould marks optional but recommended tools.
 	TierShould Tier = "should"

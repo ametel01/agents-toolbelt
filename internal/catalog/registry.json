@@ -5,7 +5,7 @@
     "name": "GitHub CLI",
     "tier": "must",
     "category": "forge",
-    "description": "Interact with GitHub from the terminal.",
+    "description": "Open PRs, inspect issues, manage repos, and query GitHub from scripts.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -48,7 +48,7 @@
     "name": "jq",
     "tier": "must",
     "category": "json",
-    "description": "Process and transform JSON from the command line.",
+    "description": "Query, filter, and rewrite JSON output from APIs, logs, and tools.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -91,7 +91,7 @@
     "name": "yq",
     "tier": "must",
     "category": "yaml",
-    "description": "Process YAML, TOML, XML, and JSON documents.",
+    "description": "Read and modify YAML and other config formats from scripts and pipelines.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -134,7 +134,7 @@
     "name": "HTTPie",
     "tier": "must",
     "category": "http_api",
-    "description": "Human-friendly command-line HTTP client.",
+    "description": "Send HTTP requests and inspect API responses without handcrafting curl commands.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -177,7 +177,7 @@
     "name": "ripgrep",
     "tier": "must",
     "category": "search",
-    "description": "Fast recursive text search for repositories and codebases.",
+    "description": "Search code, configs, and logs recursively with fast regex matching.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -220,7 +220,7 @@
     "name": "fd",
     "tier": "must",
     "category": "filesystem",
-    "description": "Fast file and directory discovery.",
+    "description": "Find files and directories quickly across large repositories.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -263,7 +263,7 @@
     "name": "sd",
     "tier": "must",
     "category": "text_processing",
-    "description": "Fast command-line find and replace tool.",
+    "description": "Perform safe, readable search-and-replace operations across files.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -306,7 +306,7 @@
     "name": "direnv",
     "tier": "must",
     "category": "env_management",
-    "description": "Load and unload environment variables by directory.",
+    "description": "Load project-specific environment variables when entering a directory.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -349,7 +349,7 @@
     "name": "just",
     "tier": "must",
     "category": "task_runner",
-    "description": "Run project tasks from a justfile.",
+    "description": "Execute named project tasks and repeatable repo workflows.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -392,7 +392,7 @@
     "name": "uv",
     "tier": "must",
     "category": "python_runtime",
-    "description": "Fast Python package and environment manager.",
+    "description": "Create Python environments and install packages with a fast unified CLI.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -435,7 +435,7 @@
     "name": "ShellCheck",
     "tier": "should",
     "category": "linting",
-    "description": "Static analysis for shell scripts.",
+    "description": "Detect bugs and portability issues in shell scripts before execution.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -478,7 +478,7 @@
     "name": "SQLite",
     "tier": "should",
     "category": "database",
-    "description": "Inspect and query SQLite databases from the terminal.",
+    "description": "Inspect schemas and run SQL queries against local SQLite databases.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -521,7 +521,7 @@
     "name": "hyperfine",
     "tier": "should",
     "category": "benchmarking",
-    "description": "Benchmark command-line workflows.",
+    "description": "Measure command performance to compare alternative workflows or scripts.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -564,7 +564,7 @@
     "name": "mise",
     "tier": "should",
     "category": "runtime_manager",
-    "description": "Manage language runtimes and developer tool versions.",
+    "description": "Install and switch language runtimes and versioned developer tools.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -607,7 +607,7 @@
     "name": "grpcurl",
     "tier": "should",
     "category": "grpc_api",
-    "description": "Interact with gRPC services from the terminal.",
+    "description": "Call gRPC services directly for debugging and API inspection.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -650,7 +650,7 @@
     "name": "Google Cloud CLI",
     "tier": "should",
     "category": "cloud_gcp",
-    "description": "Interact with Google Cloud resources from the terminal.",
+    "description": "Manage Google Cloud resources and inspect project state from the CLI.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -693,7 +693,7 @@
     "name": "kubectl",
     "tier": "should",
     "category": "kubernetes",
-    "description": "Interact with Kubernetes clusters from the terminal.",
+    "description": "Inspect resources, apply changes, and query Kubernetes cluster state.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
@@ -736,7 +736,7 @@
     "name": "Terraform",
     "tier": "should",
     "category": "iac",
-    "description": "Provision infrastructure as code from the terminal.",
+    "description": "Plan and apply infrastructure changes defined as code.",
     "platforms": ["linux", "macos"],
     "install_methods": [
       {
