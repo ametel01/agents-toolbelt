@@ -8,7 +8,19 @@ GOVULNCHECK := $(TOOLS_BIN)/govulncheck
 export GOBIN := $(TOOLS_BIN)
 export PATH := $(TOOLS_BIN):$(PATH)
 
-.PHONY: verify fmt vet lint test build vulncheck tools check-go
+.PHONY: help verify fmt vet lint test build vulncheck tools check-go
+
+help:
+	@printf "Available targets:\n"
+	@printf "  help       Show this help message\n"
+	@printf "  verify     Run the full local verification suite\n"
+	@printf "  fmt        Check Go formatting with gofmt\n"
+	@printf "  vet        Run go vet\n"
+	@printf "  lint       Run staticcheck and golangci-lint\n"
+	@printf "  test       Run unit tests and race tests\n"
+	@printf "  build      Build all packages\n"
+	@printf "  vulncheck  Run govulncheck\n"
+	@printf "  tools      Install local toolchain dependencies into .tools/bin\n"
 
 verify: check-go fmt vet lint test build vulncheck
 
