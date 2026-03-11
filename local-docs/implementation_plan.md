@@ -838,6 +838,8 @@ make verify
 
 ## Step 15 — CI & Release
 
+Status: **COMPLETED**
+
 **Goal**: GitHub Actions CI runs `make verify` on Linux + macOS. GoReleaser builds releases.
 
 **Files to create**:
