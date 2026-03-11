@@ -274,3 +274,34 @@ func isValidAuthMode(authMode string) bool {
 		return false
 	}
 }
+
+// CategoryLabels maps internal category identifiers to human-readable labels.
+var CategoryLabels = map[string]string{
+	"benchmarking":    "Benchmarking",
+	"cloud_gcp":       "Cloud",
+	"database":        "Databases",
+	"env_management":  "Environment",
+	"filesystem":      "Filesystem",
+	"forge":           "Source Control / Forge",
+	"grpc_api":        "HTTP / APIs",
+	"http_api":        "HTTP / APIs",
+	"iac":             "Infrastructure as Code",
+	"json":            "Structured Data",
+	"kubernetes":      "Kubernetes",
+	"linting":         "Linting",
+	"python_runtime":  "Runtime Management",
+	"runtime_manager": "Runtime Management",
+	"search":          "Search",
+	"task_runner":     "Task Running",
+	"text_processing": "Text Processing",
+	"yaml":            "Structured Data",
+}
+
+// CategoryLabel returns the human-readable label for a category identifier.
+func CategoryLabel(category string) string {
+	if label, ok := CategoryLabels[category]; ok {
+		return label
+	}
+
+	return category
+}

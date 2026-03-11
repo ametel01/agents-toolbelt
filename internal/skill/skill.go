@@ -42,27 +42,6 @@ var categoryOrder = []string{
 	"Infrastructure as Code",
 }
 
-var categoryLabels = map[string]string{
-	"benchmarking":    "Benchmarking",
-	"cloud_gcp":       "Cloud",
-	"database":        "Databases",
-	"env_management":  "Environment",
-	"filesystem":      "Filesystem",
-	"forge":           "Source Control / Forge",
-	"grpc_api":        "HTTP / APIs",
-	"http_api":        "HTTP / APIs",
-	"iac":             "Infrastructure as Code",
-	"json":            "Structured Data",
-	"kubernetes":      "Kubernetes",
-	"linting":         "Linting",
-	"python_runtime":  "Runtime Management",
-	"runtime_manager": "Runtime Management",
-	"search":          "Search",
-	"task_runner":     "Task Running",
-	"text_processing": "Text Processing",
-	"yaml":            "Structured Data",
-}
-
 // Generate renders the cli-tools skill content for verified, exposable tools.
 func Generate(tools []catalog.Tool) string {
 	grouped := make(map[string][]string)
@@ -118,16 +97,16 @@ func Write(content string, paths []string) error {
 }
 
 // DefaultPaths returns the standard cli-tools skill destinations for Claude Code and Codex.
-func DefaultPaths() []string {
+func DefaultPaths() ([]string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("resolve user home dir: %w", err)
 	}
 
 	return []string{
 		filepath.Join(homeDir, ".claude", "skills", "cli-tools", "SKILL.md"),
 		filepath.Join(homeDir, ".agents", "skills", "cli-tools", "SKILL.md"),
-	}
+	}, nil
 }
 
 func orderedCategories(grouped map[string][]string) []string {
@@ -154,9 +133,5 @@ func orderedCategories(grouped map[string][]string) []string {
 }
 
 func skillCategory(category string) string {
-	if label, ok := categoryLabels[category]; ok {
-		return label
-	}
-
-	return category
+	return catalog.CategoryLabel(category)
 }

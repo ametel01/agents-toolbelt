@@ -329,7 +329,7 @@ func runUninstall(ctx context.Context, stdout, stderr io.Writer, toolIDs []strin
 	}
 
 	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout); err != nil {
-		return err
+		return wrapError("persist verified skill", err)
 	}
 
 	renderSummary(stdout, "uninstall", summary)
@@ -431,7 +431,12 @@ func selectTools(registry catalog.Registry, snapshot discovery.Snapshot, yes boo
 func writeSkillFile(tools []catalog.Tool) error {
 	content := skill.Generate(tools)
 
-	return wrapError("persist cli-tools skill", skill.Write(content, skill.DefaultPaths()))
+	paths, err := skill.DefaultPaths()
+	if err != nil {
+		return wrapError("resolve skill paths", err)
+	}
+
+	return wrapError("persist cli-tools skill", skill.Write(content, paths))
 }
 
 func persistVerifiedSkill(
@@ -446,7 +451,11 @@ func persistVerifiedSkill(
 		return wrapError("refresh verified tools", err)
 	}
 
-	paths := skill.DefaultPaths()
+	paths, err := skill.DefaultPaths()
+	if err != nil {
+		return wrapError("resolve skill paths", err)
+	}
+
 	if _, err := fmt.Fprintf(stdout, "Generating cli-tools skills for %d verified tools:\n", len(verified)); err != nil {
 		return wrapError("write skill generation header", err)
 	}

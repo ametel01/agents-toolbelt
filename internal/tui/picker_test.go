@@ -102,6 +102,28 @@ func TestWindowBoundsKeepsCursorVisible(t *testing.T) {
 	}
 }
 
+func TestQuitClearsSelections(t *testing.T) {
+	t.Parallel()
+
+	model := NewPickerModel([]catalog.Tool{
+		{ID: "rg", Name: "ripgrep", Tier: catalog.TierMust, Category: "search"},
+	}, discovery.Snapshot{})
+
+	// Select the tool first.
+	updated, _ := model.Update(tea.KeyMsg{Type: tea.KeySpace})
+	selected := updated.(PickerModel)
+	if !selected.selected["rg"] {
+		t.Fatal("space should select the current tool")
+	}
+
+	// Quit with q — selections should be cleared.
+	updated, _ = selected.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	quit := updated.(PickerModel)
+	if len(quit.SelectedTools()) != 0 {
+		t.Fatalf("SelectedTools() after quit = %d, want 0", len(quit.SelectedTools()))
+	}
+}
+
 func TestHumanCategoryUsesFriendlyLabels(t *testing.T) {
 	t.Parallel()
 

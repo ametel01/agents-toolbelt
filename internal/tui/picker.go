@@ -25,6 +25,7 @@ type row struct {
 
 // PickerModel is the Bubble Tea model for interactive tool selection.
 type PickerModel struct {
+	cancelled    bool
 	cursor       int
 	expandedNice bool
 	height       int
@@ -147,7 +148,12 @@ func (m PickerModel) View() string {
 }
 
 // SelectedTools returns the current selected tool list.
+// Returns nil if the user cancelled the picker.
 func (m PickerModel) SelectedTools() []catalog.Tool {
+	if m.cancelled {
+		return nil
+	}
+
 	selected := make([]catalog.Tool, 0, len(m.selected))
 	for _, tool := range m.tools {
 		if m.selected[tool.ID] {
@@ -241,6 +247,7 @@ func (m PickerModel) handleQuitOrConfirm(msg tea.KeyMsg) (bool, tea.Model, tea.C
 
 		return true, m, tea.Quit
 	case "q", "esc":
+		m.cancelled = true
 		return true, m, tea.Quit
 	default:
 		return false, m, nil
@@ -362,31 +369,7 @@ func matchesQuery(tool catalog.Tool, query string) bool {
 }
 
 func humanCategory(category string) string {
-	if label, ok := categoryLabels[category]; ok {
-		return label
-	}
-
-	return strings.ReplaceAll(category, "_", " ")
-}
-
-var categoryLabels = map[string]string{
-	"cloud_gcp":       "Cloud",
-	"database":        "Databases",
-	"env_management":  "Environment",
-	"filesystem":      "Filesystem",
-	"forge":           "Source Control / Forge",
-	"grpc_api":        "HTTP / APIs",
-	"http_api":        "HTTP / APIs",
-	"iac":             "Infrastructure as Code",
-	"json":            "Structured Data",
-	"kubernetes":      "Kubernetes",
-	"linting":         "Linting",
-	"python_runtime":  "Runtime Management",
-	"runtime_manager": "Runtime Management",
-	"search":          "Search",
-	"task_runner":     "Task Running",
-	"text_processing": "Text Processing",
-	"yaml":            "Structured Data",
+	return catalog.CategoryLabel(category)
 }
 
 func (m PickerModel) windowBounds() (int, int) {
