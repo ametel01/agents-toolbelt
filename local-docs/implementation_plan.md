@@ -294,6 +294,8 @@ make verify
 
 ## Step 5 — Safe Command Execution (`internal/execx`)
 
+Status: **COMPLETED**
+
 **Goal**: Run external commands with timeouts, stdout/stderr capture, no shell invocation.
 
 **Files to create**:
