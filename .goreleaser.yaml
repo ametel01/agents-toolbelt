@@ -1,0 +1,15 @@
+version: 2
+
+builds:
+  - main: ./cmd/atb
+    binary: atb
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats:
+      - tar.gz

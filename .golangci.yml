@@ -1,0 +1,117 @@
+version: "2"
+
+run:
+  timeout: 5m
+  relative-path-mode: gomod
+  issues-exit-code: 1
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  enable:
+    # Core correctness
+    - errcheck
+    - gosimple
+    - govet
+    - staticcheck
+    - unused
+
+    # Error handling / robustness
+    - errorlint
+    - nilerr
+    - nilnesserr
+    - wrapcheck
+    - err113
+
+    # Context / resource safety
+    - bodyclose
+    - noctx
+    - contextcheck
+
+    # Code quality / maintainability
+    - revive
+    - gocritic
+    - copyloopvar
+    - dupl
+    - ineffassign
+    - misspell
+    - unconvert
+    - unparam
+    - prealloc
+
+    # Complexity / structure
+    - cyclop
+    - gocognit
+    - nestif
+
+    # Security
+    - gosec
+
+    # Test hygiene
+    - paralleltest
+    - tparallel
+    - thelper
+
+    # NOLINT discipline
+    - nolintlint
+
+  settings:
+    copyloopvar:
+      check-alias: true
+
+    dupl:
+      threshold: 100
+
+    cyclop:
+      max-complexity: 12
+      package-average: 8.0
+
+    nestif:
+      min-complexity: 4
+
+    revive:
+      severity: error
+      enable-all-rules: false
+      rules:
+        - name: atomic
+        - name: bare-return
+        - name: blank-imports
+        - name: bool-literal-in-expr
+        - name: constant-logical-expr
+        - name: context-as-argument
+        - name: deep-exit
+        - name: duplicated-imports
+        - name: early-return
+        - name: empty-block
+        - name: empty-lines
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unconditional-recursion
+        - name: unnecessary-stmt
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: useless-break
+        - name: var-declaration
+        - name: waitgroup-by-value
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+    - gci
+
+  exclusions:
+    generated: strict
