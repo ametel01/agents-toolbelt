@@ -1,0 +1,948 @@
+[
+  {
+    "id": "gh",
+    "bin": "gh",
+    "name": "GitHub CLI",
+    "tier": "must",
+    "category": "forge",
+    "description": "Interact with GitHub from the terminal.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "gh",
+        "command": ["brew", "install", "gh"],
+        "update_command": ["brew", "upgrade", "gh"],
+        "uninstall_command": ["brew", "uninstall", "gh"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "apt",
+        "package": "gh",
+        "command": ["sudo", "apt", "install", "-y", "gh"],
+        "update_command": ["sudo", "apt", "install", "-y", "--only-upgrade", "gh"],
+        "uninstall_command": ["sudo", "apt", "remove", "-y", "gh"],
+        "requires_sudo": true,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "optional",
+    "service_dependency": "github.com",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["gh", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "gh version ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["git", "github", "forge"]
+  },
+  {
+    "id": "jq",
+    "bin": "jq",
+    "name": "jq",
+    "tier": "must",
+    "category": "json",
+    "description": "Process and transform JSON from the command line.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "jq",
+        "command": ["brew", "install", "jq"],
+        "update_command": ["brew", "upgrade", "jq"],
+        "uninstall_command": ["brew", "uninstall", "jq"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "apt",
+        "package": "jq",
+        "command": ["sudo", "apt", "install", "-y", "jq"],
+        "update_command": ["sudo", "apt", "install", "-y", "--only-upgrade", "jq"],
+        "uninstall_command": ["sudo", "apt", "remove", "-y", "jq"],
+        "requires_sudo": true,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["jq", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "jq-([0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["json", "api"]
+  },
+  {
+    "id": "yq",
+    "bin": "yq",
+    "name": "yq",
+    "tier": "must",
+    "category": "yaml",
+    "description": "Process YAML, TOML, XML, and JSON documents.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "yq",
+        "command": ["brew", "install", "yq"],
+        "update_command": ["brew", "upgrade", "yq"],
+        "uninstall_command": ["brew", "uninstall", "yq"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "go",
+        "package": "github.com/mikefarah/yq/v4",
+        "command": ["go", "install", "github.com/mikefarah/yq/v4@latest"],
+        "update_command": ["go", "install", "github.com/mikefarah/yq/v4@latest"],
+        "uninstall_command": ["rm", "-f", "$HOME/go/bin/yq"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["yq", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "version ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["yaml", "config"]
+  },
+  {
+    "id": "httpie",
+    "bin": "http",
+    "name": "HTTPie",
+    "tier": "must",
+    "category": "http_api",
+    "description": "Human-friendly command-line HTTP client.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "httpie",
+        "command": ["brew", "install", "httpie"],
+        "update_command": ["brew", "upgrade", "httpie"],
+        "uninstall_command": ["brew", "uninstall", "httpie"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "pipx",
+        "package": "httpie",
+        "command": ["pipx", "install", "httpie"],
+        "update_command": ["pipx", "upgrade", "httpie"],
+        "uninstall_command": ["pipx", "uninstall", "httpie"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["http", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["http", "api", "rest"]
+  },
+  {
+    "id": "fzf",
+    "bin": "fzf",
+    "name": "fzf",
+    "tier": "must",
+    "category": "navigation",
+    "description": "General-purpose fuzzy finder for the terminal.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "fzf",
+        "command": ["brew", "install", "fzf"],
+        "update_command": ["brew", "upgrade", "fzf"],
+        "uninstall_command": ["brew", "uninstall", "fzf"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "apt",
+        "package": "fzf",
+        "command": ["sudo", "apt", "install", "-y", "fzf"],
+        "update_command": ["sudo", "apt", "install", "-y", "--only-upgrade", "fzf"],
+        "uninstall_command": ["sudo", "apt", "remove", "-y", "fzf"],
+        "requires_sudo": true,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": true,
+    "tui": false,
+    "verify": {
+      "command": ["fzf", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "^([0-9]+\\.[0-9]+(?:\\.[0-9]+)?)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["navigation", "fuzzy", "search"]
+  },
+  {
+    "id": "bat",
+    "bin": "bat",
+    "name": "bat",
+    "tier": "must",
+    "category": "file_viewing",
+    "description": "Cat clone with syntax highlighting and Git integration.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "bat",
+        "command": ["brew", "install", "bat"],
+        "update_command": ["brew", "upgrade", "bat"],
+        "uninstall_command": ["brew", "uninstall", "bat"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "bat",
+        "command": ["cargo", "install", "--locked", "bat"],
+        "update_command": ["cargo", "install", "--locked", "bat"],
+        "uninstall_command": ["cargo", "uninstall", "bat"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["bat", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "bat ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["files", "pager"]
+  },
+  {
+    "id": "eza",
+    "bin": "eza",
+    "name": "eza",
+    "tier": "must",
+    "category": "filesystem",
+    "description": "Modern replacement for ls with better defaults.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "eza",
+        "command": ["brew", "install", "eza"],
+        "update_command": ["brew", "upgrade", "eza"],
+        "uninstall_command": ["brew", "uninstall", "eza"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "eza",
+        "command": ["cargo", "install", "eza"],
+        "update_command": ["cargo", "install", "eza"],
+        "uninstall_command": ["cargo", "uninstall", "eza"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["eza", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "v([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["filesystem", "listing"]
+  },
+  {
+    "id": "delta",
+    "bin": "delta",
+    "name": "git-delta",
+    "tier": "must",
+    "category": "diff_viewing",
+    "description": "Syntax-highlighting pager for Git and diff output.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "git-delta",
+        "command": ["brew", "install", "git-delta"],
+        "update_command": ["brew", "upgrade", "git-delta"],
+        "uninstall_command": ["brew", "uninstall", "git-delta"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "git-delta",
+        "command": ["cargo", "install", "git-delta"],
+        "update_command": ["cargo", "install", "git-delta"],
+        "uninstall_command": ["cargo", "uninstall", "git-delta"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["delta", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "delta ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["git", "diff"]
+  },
+  {
+    "id": "zoxide",
+    "bin": "zoxide",
+    "name": "zoxide",
+    "tier": "must",
+    "category": "navigation",
+    "description": "Smarter cd command for shell navigation.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "zoxide",
+        "command": ["brew", "install", "zoxide"],
+        "update_command": ["brew", "upgrade", "zoxide"],
+        "uninstall_command": ["brew", "uninstall", "zoxide"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "zoxide",
+        "command": ["cargo", "install", "--locked", "zoxide"],
+        "update_command": ["cargo", "install", "--locked", "zoxide"],
+        "uninstall_command": ["cargo", "uninstall", "zoxide"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "required",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["zoxide", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "zoxide ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["navigation", "shell"]
+  },
+  {
+    "id": "direnv",
+    "bin": "direnv",
+    "name": "direnv",
+    "tier": "must",
+    "category": "env_management",
+    "description": "Load and unload environment variables based on the current directory.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "direnv",
+        "command": ["brew", "install", "direnv"],
+        "update_command": ["brew", "upgrade", "direnv"],
+        "uninstall_command": ["brew", "uninstall", "direnv"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "apt",
+        "package": "direnv",
+        "command": ["sudo", "apt", "install", "-y", "direnv"],
+        "update_command": ["sudo", "apt", "install", "-y", "--only-upgrade", "direnv"],
+        "uninstall_command": ["sudo", "apt", "remove", "-y", "direnv"],
+        "requires_sudo": true,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "required",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["direnv", "version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["env", "shell", "runtime"]
+  },
+  {
+    "id": "just",
+    "bin": "just",
+    "name": "just",
+    "tier": "must",
+    "category": "task_runner",
+    "description": "Save and run project commands from a justfile.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "just",
+        "command": ["brew", "install", "just"],
+        "update_command": ["brew", "upgrade", "just"],
+        "uninstall_command": ["brew", "uninstall", "just"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "just",
+        "command": ["cargo", "install", "--locked", "just"],
+        "update_command": ["cargo", "install", "--locked", "just"],
+        "uninstall_command": ["cargo", "uninstall", "just"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["just", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "just ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": true,
+    "tags": ["tasks", "automation"]
+  },
+  {
+    "id": "starship",
+    "bin": "starship",
+    "name": "starship",
+    "tier": "should",
+    "category": "shell_prompt",
+    "description": "Cross-shell prompt with contextual status segments.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "starship",
+        "command": ["brew", "install", "starship"],
+        "update_command": ["brew", "upgrade", "starship"],
+        "uninstall_command": ["brew", "uninstall", "starship"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "starship",
+        "command": ["cargo", "install", "starship"],
+        "update_command": ["cargo", "install", "starship"],
+        "uninstall_command": ["cargo", "uninstall", "starship"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "optional",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["starship", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "starship ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["prompt", "shell"]
+  },
+  {
+    "id": "atuin",
+    "bin": "atuin",
+    "name": "atuin",
+    "tier": "should",
+    "category": "shell_history",
+    "description": "Searchable shell history with optional sync.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "atuin",
+        "command": ["brew", "install", "atuin"],
+        "update_command": ["brew", "upgrade", "atuin"],
+        "uninstall_command": ["brew", "uninstall", "atuin"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "atuin",
+        "command": ["cargo", "install", "--locked", "atuin"],
+        "update_command": ["cargo", "install", "--locked", "atuin"],
+        "uninstall_command": ["cargo", "uninstall", "atuin"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "required",
+    "auth": "optional",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["atuin", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "atuin ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["history", "shell"]
+  },
+  {
+    "id": "hyperfine",
+    "bin": "hyperfine",
+    "name": "hyperfine",
+    "tier": "should",
+    "category": "benchmarking",
+    "description": "Benchmark CLI commands with statistical output.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "hyperfine",
+        "command": ["brew", "install", "hyperfine"],
+        "update_command": ["brew", "upgrade", "hyperfine"],
+        "uninstall_command": ["brew", "uninstall", "hyperfine"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "hyperfine",
+        "command": ["cargo", "install", "hyperfine"],
+        "update_command": ["cargo", "install", "hyperfine"],
+        "uninstall_command": ["cargo", "uninstall", "hyperfine"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["hyperfine", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "hyperfine ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["benchmarking", "performance"]
+  },
+  {
+    "id": "uv",
+    "bin": "uv",
+    "name": "uv",
+    "tier": "should",
+    "category": "python_runtime",
+    "description": "Fast Python package and project manager.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "uv",
+        "command": ["brew", "install", "uv"],
+        "update_command": ["brew", "upgrade", "uv"],
+        "uninstall_command": ["brew", "uninstall", "uv"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "pipx",
+        "package": "uv",
+        "command": ["pipx", "install", "uv"],
+        "update_command": ["pipx", "upgrade", "uv"],
+        "uninstall_command": ["pipx", "uninstall", "uv"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["uv", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "uv ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["python", "runtime"]
+  },
+  {
+    "id": "mise",
+    "bin": "mise",
+    "name": "mise",
+    "tier": "should",
+    "category": "runtime_manager",
+    "description": "Polyglot runtime manager and task runner.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "mise",
+        "command": ["brew", "install", "mise"],
+        "update_command": ["brew", "upgrade", "mise"],
+        "uninstall_command": ["brew", "uninstall", "mise"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "cargo",
+        "package": "mise",
+        "command": ["cargo", "install", "mise"],
+        "update_command": ["cargo", "install", "mise"],
+        "uninstall_command": ["cargo", "uninstall", "mise"],
+        "requires_sudo": false,
+        "timeout_seconds": 900
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "none",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["mise", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["runtime", "versions", "env"]
+  },
+  {
+    "id": "grpcurl",
+    "bin": "grpcurl",
+    "name": "grpcurl",
+    "tier": "should",
+    "category": "grpc_api",
+    "description": "Invoke gRPC services from the command line.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "grpcurl",
+        "command": ["brew", "install", "grpcurl"],
+        "update_command": ["brew", "upgrade", "grpcurl"],
+        "uninstall_command": ["brew", "uninstall", "grpcurl"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "go",
+        "package": "github.com/fullstorydev/grpcurl/cmd/grpcurl",
+        "command": ["go", "install", "github.com/fullstorydev/grpcurl/cmd/grpcurl@latest"],
+        "update_command": ["go", "install", "github.com/fullstorydev/grpcurl/cmd/grpcurl@latest"],
+        "uninstall_command": ["rm", "-f", "$HOME/go/bin/grpcurl"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "optional",
+    "service_dependency": "",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["grpcurl", "-version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "grpcurl ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["grpc", "api"]
+  },
+  {
+    "id": "gcloud",
+    "bin": "gcloud",
+    "name": "Google Cloud CLI",
+    "tier": "should",
+    "category": "cloud_gcp",
+    "description": "Google Cloud command-line interface.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "google-cloud-sdk",
+        "command": ["brew", "install", "--cask", "google-cloud-sdk"],
+        "update_command": ["brew", "upgrade", "--cask", "google-cloud-sdk"],
+        "uninstall_command": ["brew", "uninstall", "--cask", "google-cloud-sdk"],
+        "requires_sudo": false,
+        "timeout_seconds": 1200
+      },
+      {
+        "manager": "snap",
+        "package": "google-cloud-cli",
+        "command": ["sudo", "snap", "install", "google-cloud-cli", "--classic"],
+        "update_command": ["sudo", "snap", "refresh", "google-cloud-cli"],
+        "uninstall_command": ["sudo", "snap", "remove", "google-cloud-cli"],
+        "requires_sudo": true,
+        "timeout_seconds": 1200
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "required",
+    "service_dependency": "gcp",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["gcloud", "version"],
+      "timeout_seconds": 15,
+      "expected_exit_codes": [0],
+      "version_regex": "Google Cloud SDK ([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["cloud", "gcp"]
+  },
+  {
+    "id": "kubectl",
+    "bin": "kubectl",
+    "name": "kubectl",
+    "tier": "should",
+    "category": "kubernetes",
+    "description": "Command-line tool for interacting with Kubernetes clusters.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "kubectl",
+        "command": ["brew", "install", "kubectl"],
+        "update_command": ["brew", "upgrade", "kubectl"],
+        "uninstall_command": ["brew", "uninstall", "kubectl"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "snap",
+        "package": "kubectl",
+        "command": ["sudo", "snap", "install", "kubectl", "--classic"],
+        "update_command": ["sudo", "snap", "refresh", "kubectl"],
+        "uninstall_command": ["sudo", "snap", "remove", "kubectl"],
+        "requires_sudo": true,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "optional",
+    "service_dependency": "kubernetes-cluster",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["kubectl", "version", "--client=true", "--output=yaml"],
+      "timeout_seconds": 15,
+      "expected_exit_codes": [0],
+      "version_regex": "gitVersion: v([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["kubernetes", "cloud"]
+  },
+  {
+    "id": "terraform",
+    "bin": "terraform",
+    "name": "Terraform",
+    "tier": "should",
+    "category": "iac",
+    "description": "Infrastructure as code CLI for provisioning and lifecycle management.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "terraform",
+        "command": ["brew", "install", "terraform"],
+        "update_command": ["brew", "upgrade", "terraform"],
+        "uninstall_command": ["brew", "uninstall", "terraform"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "snap",
+        "package": "terraform",
+        "command": ["sudo", "snap", "install", "terraform", "--classic"],
+        "update_command": ["sudo", "snap", "refresh", "terraform"],
+        "uninstall_command": ["sudo", "snap", "remove", "terraform"],
+        "requires_sudo": true,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "optional",
+    "service_dependency": "infrastructure-provider",
+    "interactive": false,
+    "tui": false,
+    "verify": {
+      "command": ["terraform", "version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "Terraform v([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["iac", "infrastructure"]
+  },
+  {
+    "id": "k9s",
+    "bin": "k9s",
+    "name": "k9s",
+    "tier": "nice",
+    "category": "kubernetes_tui",
+    "description": "Terminal UI for Kubernetes cluster navigation and inspection.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "k9s",
+        "command": ["brew", "install", "k9s"],
+        "update_command": ["brew", "upgrade", "k9s"],
+        "uninstall_command": ["brew", "uninstall", "k9s"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "go",
+        "package": "github.com/derailed/k9s",
+        "command": ["go", "install", "github.com/derailed/k9s@latest"],
+        "update_command": ["go", "install", "github.com/derailed/k9s@latest"],
+        "uninstall_command": ["rm", "-f", "$HOME/go/bin/k9s"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "optional",
+    "service_dependency": "kubernetes-cluster",
+    "interactive": true,
+    "tui": true,
+    "verify": {
+      "command": ["k9s", "version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "Version:\\s+v?([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["kubernetes", "tui"]
+  },
+  {
+    "id": "lazydocker",
+    "bin": "lazydocker",
+    "name": "lazydocker",
+    "tier": "nice",
+    "category": "docker_tui",
+    "description": "Terminal UI for common Docker workflows.",
+    "platforms": ["linux", "macos"],
+    "install_methods": [
+      {
+        "manager": "brew",
+        "package": "lazydocker",
+        "command": ["brew", "install", "lazydocker"],
+        "update_command": ["brew", "upgrade", "lazydocker"],
+        "uninstall_command": ["brew", "uninstall", "lazydocker"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      },
+      {
+        "manager": "go",
+        "package": "github.com/jesseduffield/lazydocker",
+        "command": ["go", "install", "github.com/jesseduffield/lazydocker@latest"],
+        "update_command": ["go", "install", "github.com/jesseduffield/lazydocker@latest"],
+        "uninstall_command": ["rm", "-f", "$HOME/go/bin/lazydocker"],
+        "requires_sudo": false,
+        "timeout_seconds": 600
+      }
+    ],
+    "shell_hook": "none",
+    "auth": "optional",
+    "service_dependency": "docker-daemon",
+    "interactive": true,
+    "tui": true,
+    "verify": {
+      "command": ["lazydocker", "--version"],
+      "timeout_seconds": 10,
+      "expected_exit_codes": [0],
+      "version_regex": "Version:\\s+([0-9]+\\.[0-9]+\\.[0-9]+)"
+    },
+    "skill_expose": true,
+    "default_selected": false,
+    "tags": ["docker", "tui"]
+  }
+]

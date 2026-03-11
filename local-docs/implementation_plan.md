@@ -111,6 +111,8 @@ make verify
 
 ## Step 2 — Embedded Tool Registry (`internal/catalog`)
 
+Status: **COMPLETED**
+
 **Goal**: 22 tools defined in JSON, embedded in binary, loaded and validated at startup.
 
 **Files to create**:
