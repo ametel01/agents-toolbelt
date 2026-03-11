@@ -25,10 +25,8 @@ func newUninstallCmd() *cobra.Command {
 
 			return errUninstallTargetRequired
 		},
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			cmd.Println("not implemented")
-
-			return nil
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runUninstall(cmd.Context(), cmd.OutOrStdout(), cmd.ErrOrStderr(), args, all)
 		},
 	}
 

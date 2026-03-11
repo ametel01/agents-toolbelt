@@ -7,9 +7,7 @@ func newStatusCmd() *cobra.Command {
 		Use:   "status",
 		Short: "Show tool installation status",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			cmd.Println("not implemented")
-
-			return nil
+			return runStatus(cmd.OutOrStdout(), cmd.ErrOrStderr())
 		},
 	}
 }

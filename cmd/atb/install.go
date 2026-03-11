@@ -9,10 +9,7 @@ func newInstallCmd() *cobra.Command {
 		Use:   "install",
 		Short: "Install selected tools",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			_ = yes
-			cmd.Println("not implemented")
-
-			return nil
+			return runInstall(cmd.Context(), cmd.OutOrStdout(), cmd.ErrOrStderr(), yes)
 		},
 	}
 
