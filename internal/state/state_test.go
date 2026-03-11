@@ -44,6 +44,13 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 		t.Fatalf("loadFromPath() error = %v", err)
 	}
 
+	// LastRunAt is updated to the current time on save, so compare it separately.
+	if loaded.LastRunAt.Before(original.LastRunAt) {
+		t.Fatalf("loaded.LastRunAt = %v, want >= %v", loaded.LastRunAt, original.LastRunAt)
+	}
+
+	// Compare the remaining fields with LastRunAt normalized.
+	loaded.LastRunAt = original.LastRunAt
 	if !reflect.DeepEqual(loaded, original) {
 		t.Fatalf("loadFromPath() = %#v, want %#v", loaded, original)
 	}

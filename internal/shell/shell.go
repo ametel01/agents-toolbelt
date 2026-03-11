@@ -128,8 +128,29 @@ func appendInitLine(path, initLine string) error {
 	builder.WriteString(initLine)
 	builder.WriteString("\n")
 
-	if err := os.WriteFile(path, []byte(builder.String()), 0o600); err != nil {
-		return fmt.Errorf("write rc file %s: %w", path, err)
+	tempFile, err := os.CreateTemp(filepath.Dir(path), ".rc-*.tmp")
+	if err != nil {
+		return fmt.Errorf("create temp rc file for %s: %w", path, err)
+	}
+
+	tempPath := tempFile.Name()
+	if _, err := tempFile.WriteString(builder.String()); err != nil {
+		_ = tempFile.Close()
+		_ = os.Remove(tempPath)
+
+		return fmt.Errorf("write temp rc file for %s: %w", path, err)
+	}
+
+	if err := tempFile.Close(); err != nil {
+		_ = os.Remove(tempPath)
+
+		return fmt.Errorf("close temp rc file for %s: %w", path, err)
+	}
+
+	if err := os.Rename(tempPath, path); err != nil {
+		_ = os.Remove(tempPath)
+
+		return fmt.Errorf("rename temp rc file to %s: %w", path, err)
 	}
 
 	return nil

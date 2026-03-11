@@ -197,6 +197,7 @@ func loadFromPath(path string) (State, error) {
 
 func saveToPath(path string, st State) error {
 	st.ensureInitialized()
+	st.LastRunAt = time.Now().UTC()
 
 	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		return fmt.Errorf("create state directory: %w", err)
