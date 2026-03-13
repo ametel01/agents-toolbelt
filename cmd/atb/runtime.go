@@ -82,6 +82,10 @@ func runInstall(ctx context.Context, stdout, stderr io.Writer, yes bool) error {
 		return wrapError("write empty selection message", writeErr)
 	}
 
+	if err := bootstrapDependencies(ctx, stdout, &installCtx, yes); err != nil {
+		return err
+	}
+
 	installPlan, err := plan.BuildInstallPlan(installCtx.selected, installCtx.snapshot, installCtx.managers)
 	if err != nil {
 		return wrapError("build install plan", err)
@@ -109,20 +113,49 @@ func runInstall(ctx context.Context, stdout, stderr io.Writer, yes bool) error {
 		return wrapError("apply shell workflow", err)
 	}
 
+	if err := finishInstall(ctx, stdout, yes, &installCtx); err != nil {
+		return err
+	}
+
+	renderSummary(stdout, "install", summary)
+
+	return nil
+}
+
+func bootstrapDependencies(ctx context.Context, stdout io.Writer, installCtx *installContext, yes bool) error {
+	dependencies, err := selectDependencies(installCtx.selected, installCtx.managers, yes)
+	if err != nil {
+		return wrapError("select dependencies", err)
+	}
+
+	if err := renderDependencyPlanPreview(stdout, dependencies); err != nil {
+		return wrapError("write dependency plan preview", err)
+	}
+
+	if err := installDependencies(ctx, stdout, dependencies); err != nil {
+		return wrapError("install dependencies", err)
+	}
+
+	installCtx.managers = pkgmgr.DetectManagers()
+
+	return nil
+}
+
+func finishInstall(ctx context.Context, stdout io.Writer, yes bool, installCtx *installContext) error {
 	targets, err := selectTargets(yes)
 	if err != nil {
 		return wrapError("select skill targets", err)
 	}
 
 	if len(targets) == 0 {
-		if _, writeErr := fmt.Fprintln(stdout, "Skill generation skipped."); writeErr != nil {
-			return wrapError("write skip message", writeErr)
-		}
-	} else if err := persistVerifiedSkill(ctx, installCtx.registry, &installCtx.stateData, liveVerifier{}, stdout, targets); err != nil {
-		return wrapError("persist verified skill", err)
+		_, writeErr := fmt.Fprintln(stdout, "Skill generation skipped.")
+
+		return wrapError("write skip message", writeErr)
 	}
 
-	renderSummary(stdout, "install", summary)
+	if err := persistVerifiedSkill(ctx, installCtx.registry, &installCtx.stateData, liveVerifier{}, stdout, targets); err != nil {
+		return wrapError("persist verified skill", err)
+	}
 
 	return nil
 }
@@ -474,6 +507,28 @@ func selectTools(registry catalog.Registry, snapshot discovery.Snapshot, yes boo
 	return selected, nil
 }
 
+func selectDependencies(selected []catalog.Tool, managers []pkgmgr.Manager, yes bool) ([]pkgmgr.DependencyPlanItem, error) {
+	dependencies := pkgmgr.ResolveDependencies(selected, managers)
+	if len(dependencies) == 0 {
+		return nil, nil
+	}
+
+	if yes {
+		return dependencies, nil
+	}
+
+	selectedDependencies, err := tui.RunDependencyPicker(dependencies)
+	if err != nil {
+		return nil, wrapError("run dependency picker", err)
+	}
+
+	if selectedDependencies == nil {
+		return nil, nil
+	}
+
+	return selectedDependencies, nil
+}
+
 func selectTargets(yes bool) ([]skill.Target, error) {
 	if yes {
 		return skill.AllTargets(), nil
@@ -586,6 +641,78 @@ func refreshVerifiedTools(
 	}
 
 	return verified, nil
+}
+
+func renderDependencyPlanPreview(stdout io.Writer, dependencies []pkgmgr.DependencyPlanItem) error {
+	if len(dependencies) == 0 {
+		return nil
+	}
+
+	if _, err := fmt.Fprintln(stdout, "Dependency plan:"); err != nil {
+		return wrapError("write dependency plan header", err)
+	}
+
+	for _, dependency := range dependencies {
+		requiredBy := make([]string, 0, len(dependency.RequiredBy))
+		for _, tool := range dependency.RequiredBy {
+			requiredBy = append(requiredBy, actionLabel(tool))
+		}
+
+		label := fmt.Sprintf("install %s via %s", dependency.Name, dependency.Manager.Name())
+		if dependency.Method.Package != "" && dependency.Method.Package != dependency.Name {
+			label += fmt.Sprintf(" (%s package)", dependency.Method.Package)
+		}
+		label += fmt.Sprintf(" for %s", strings.Join(requiredBy, ", "))
+
+		if _, err := fmt.Fprintf(stdout, "  - %s\n", label); err != nil {
+			return wrapError("write dependency plan entry", err)
+		}
+	}
+
+	if _, err := fmt.Fprintln(stdout); err != nil {
+		return wrapError("write dependency plan spacing", err)
+	}
+
+	return nil
+}
+
+func installDependencies(ctx context.Context, stdout io.Writer, dependencies []pkgmgr.DependencyPlanItem) error {
+	for index, dependency := range dependencies {
+		if err := ctx.Err(); err != nil {
+			return fmt.Errorf("dependency install canceled: %w", err)
+		}
+
+		if _, err := fmt.Fprintf(
+			stdout,
+			"[%d/%d] Installing dependency %s via %s...\n",
+			index+1,
+			len(dependencies),
+			dependency.Name,
+			dependency.Manager.Name(),
+		); err != nil {
+			return wrapError("write dependency progress", err)
+		}
+
+		if err := dependency.Manager.Install(ctx, dependency.Method); err != nil {
+			if _, writeErr := fmt.Fprintf(stdout, "      failed %s: %v\n", dependency.Name, err); writeErr != nil {
+				return wrapError("write dependency failure", writeErr)
+			}
+
+			continue
+		}
+
+		if _, err := fmt.Fprintf(stdout, "      completed %s\n", dependency.Name); err != nil {
+			return wrapError("write dependency completion", err)
+		}
+	}
+
+	if len(dependencies) > 0 {
+		if _, err := fmt.Fprintln(stdout); err != nil {
+			return wrapError("write dependency spacing", err)
+		}
+	}
+
+	return nil
 }
 
 func toolStateForPresence(presence discovery.ToolPresence) state.ToolState {
@@ -797,7 +924,7 @@ func renderManagerInfo(stdout io.Writer, managers []pkgmgr.Manager) error {
 	for _, manager := range managers {
 		name := manager.Name()
 		names = append(names, name)
-		if isSecondaryManager(name) {
+		if pkgmgr.IsSecondaryManager(name) {
 			secondary = append(secondary, name)
 		}
 	}
@@ -809,7 +936,7 @@ func renderManagerInfo(stdout io.Writer, managers []pkgmgr.Manager) error {
 	if len(secondary) > 0 {
 		if _, err := fmt.Fprintf(
 			stdout,
-			"Note: %s must already be installed on the host; atb does not bootstrap those managers.\n\n",
+			"Note: %s are tool-specific managers. atb can bootstrap them during install when a supported system package manager is available.\n\n",
 			strings.Join(secondary, ", "),
 		); err != nil {
 			return wrapError("write secondary manager note", err)
@@ -824,20 +951,11 @@ func renderManagerInfo(stdout io.Writer, managers []pkgmgr.Manager) error {
 }
 
 func methodNote(manager string) string {
-	if !isSecondaryManager(manager) {
+	if !pkgmgr.IsSecondaryManager(manager) {
 		return ""
 	}
 
-	return " (requires that manager on the host)"
-}
-
-func isSecondaryManager(manager string) bool {
-	switch manager {
-	case "cargo", "go", "pipx":
-		return true
-	default:
-		return false
-	}
+	return " (tool-specific manager)"
 }
 
 func titleCase(value string) string {
