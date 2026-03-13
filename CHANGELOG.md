@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-14
+
 ### Changed
 - `atb install` now detects missing tool-specific install managers such as `go`, `pipx`, and `cargo`, prompts for them during interactive installs, bootstraps the selected dependencies first when a supported system package manager is available, and then continues with the selected tool installations.
 
