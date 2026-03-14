@@ -72,7 +72,10 @@ func Reconcile(reg catalog.Registry, st state.State, paths map[string]string) Sn
 			Path:      path,
 			Installed: path != "",
 			Ownership: OwnershipMissing,
-			Receipt:   receipt,
+		}
+
+		if ok {
+			presence.Receipt = &receipt
 		}
 
 		if ok {

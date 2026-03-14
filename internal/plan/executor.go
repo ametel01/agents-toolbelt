@@ -100,7 +100,7 @@ func ExecuteUpdatePlan(ctx context.Context, plan Plan, st *state.State, verifier
 			}
 
 			receipt.LastUpdateAttemptAt = time.Now().UTC()
-			if err := st.AddReceipt(*receipt); err != nil {
+			if err := st.AddReceipt(receipt); err != nil {
 				return summary, fmt.Errorf("persist update receipt for %s: %w", action.Tool.ID, err)
 			}
 
@@ -198,7 +198,7 @@ func updateReceiptVerification(st *state.State, toolID string, result verify.Ver
 	receipt.LastVerifyOK = result.Verified
 	receipt.LastVerifyError = result.Error
 	receipt.Version = result.Version
-	if err := st.SetTool(*receipt); err != nil {
+	if err := st.SetTool(receipt); err != nil {
 		return
 	}
 }
