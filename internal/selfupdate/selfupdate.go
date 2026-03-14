@@ -5,6 +5,8 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,11 +25,14 @@ const (
 	DefaultRepo = "ametel01/agents-toolbelt"
 
 	binaryName           = "atb"
+	checksumAssetName    = "checksums.txt"
 	maxReleaseBinarySize = 64 << 20
 )
 
 var (
 	errAssetNotFound      = errors.New("release asset not found for platform")
+	errChecksumMismatch   = errors.New("checksum verification failed")
+	errChecksumNotFound   = errors.New("checksum not found for asset")
 	errInvalidVersion     = errors.New("invalid version")
 	errInvalidBinarySize  = errors.New("release binary has invalid size")
 	errBinaryTooLarge     = errors.New("release binary exceeds size limit")
@@ -117,12 +122,7 @@ func Update(ctx context.Context, opts Options) (Result, error) {
 		return result, nil
 	}
 
-	assetURL, err := assetDownloadURL(release, goos, goarch)
-	if err != nil {
-		return Result{}, err
-	}
-
-	if err := downloadAndReplace(ctx, client, assetURL, executablePath); err != nil {
+	if err := fetchVerifyAndReplace(ctx, client, release, goos, goarch, executablePath); err != nil {
 		return Result{}, err
 	}
 
@@ -220,8 +220,32 @@ func latestRelease(ctx context.Context, client *http.Client, repo, baseURL strin
 	return release, nil
 }
 
-func assetDownloadURL(release githubRelease, goos, goarch string) (string, error) {
-	assetName := fmt.Sprintf("%s_%s_%s.tar.gz", binaryName, goos, goarch)
+func fetchVerifyAndReplace(ctx context.Context, client *http.Client, release githubRelease, goos, goarch, executablePath string) error {
+	assetName := archiveName(goos, goarch)
+
+	assetURL, err := findAssetURL(release, assetName)
+	if err != nil {
+		return err
+	}
+
+	checksumURL, err := findAssetURL(release, checksumAssetName)
+	if err != nil {
+		return err
+	}
+
+	expectedHash, err := fetchExpectedChecksum(ctx, client, checksumURL, assetName)
+	if err != nil {
+		return err
+	}
+
+	return downloadAndReplace(ctx, client, assetURL, expectedHash, executablePath)
+}
+
+func archiveName(goos, goarch string) string {
+	return fmt.Sprintf("%s_%s_%s.tar.gz", binaryName, goos, goarch)
+}
+
+func findAssetURL(release githubRelease, assetName string) (string, error) {
 	for _, asset := range release.Assets {
 		if asset.Name == assetName && asset.BrowserDownloadURL != "" {
 			return asset.BrowserDownloadURL, nil
@@ -231,27 +255,114 @@ func assetDownloadURL(release githubRelease, goos, goarch string) (string, error
 	return "", fmt.Errorf("%w: %s", errAssetNotFound, assetName)
 }
 
-func downloadAndReplace(ctx context.Context, client *http.Client, assetURL, executablePath string) (err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, assetURL, nil)
+func fetchExpectedChecksum(ctx context.Context, client *http.Client, checksumURL, assetName string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, checksumURL, nil)
 	if err != nil {
-		return fmt.Errorf("build asset request: %w", err)
+		return "", fmt.Errorf("build checksum request: %w", err)
 	}
 
 	req.Header.Set("User-Agent", "atb-self-update")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("download release asset: %w", err)
+		return "", fmt.Errorf("download checksums: %w", err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("%w: checksums returned %s", errUnexpectedResponse, resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("read checksums: %w", err)
+	}
+
+	return parseChecksum(string(body), assetName)
+}
+
+func parseChecksum(checksums, assetName string) (string, error) {
+	for _, line := range strings.Split(checksums, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 2 && fields[1] == assetName {
+			return fields[0], nil
+		}
+	}
+
+	return "", fmt.Errorf("%w: %s", errChecksumNotFound, assetName)
+}
+
+func downloadAndReplace(ctx context.Context, client *http.Client, assetURL, expectedHash, executablePath string) (err error) {
+	archivePath, actualHash, err := downloadArchive(ctx, client, assetURL)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = os.Remove(archivePath) }()
+
+	if actualHash != expectedHash {
+		return fmt.Errorf("%w: expected %s, got %s", errChecksumMismatch, expectedHash, actualHash)
+	}
+
+	//nolint:gosec // archivePath is a temp file created by downloadArchive, not user input.
+	archiveFile, err := os.Open(archivePath)
+	if err != nil {
+		return fmt.Errorf("open verified archive: %w", err)
+	}
+	defer func() {
+		err = errors.Join(err, closeWithContext(archiveFile, "close verified archive"))
+	}()
+
+	return replaceExecutable(archiveFile, executablePath)
+}
+
+func downloadArchive(ctx context.Context, client *http.Client, assetURL string) (archivePath string, checksum string, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, assetURL, nil)
+	if err != nil {
+		return "", "", fmt.Errorf("build asset request: %w", err)
+	}
+
+	req.Header.Set("User-Agent", "atb-self-update")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", "", fmt.Errorf("download release asset: %w", err)
 	}
 	defer func() {
 		err = errors.Join(err, closeWithContext(resp.Body, "close release asset response body"))
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("%w: release asset returned %s", errUnexpectedResponse, resp.Status)
+		return "", "", fmt.Errorf("%w: release asset returned %s", errUnexpectedResponse, resp.Status)
 	}
 
-	return replaceExecutable(resp.Body, executablePath)
+	return saveAndHash(resp.Body)
+}
+
+func saveAndHash(body io.Reader) (path string, checksum string, err error) {
+	tempFile, err := os.CreateTemp("", ".atb-archive-*")
+	if err != nil {
+		return "", "", fmt.Errorf("create temp archive: %w", err)
+	}
+
+	tempPath := tempFile.Name()
+	success := false
+	defer func() {
+		_ = tempFile.Close()
+		if !success {
+			_ = os.Remove(tempPath)
+		}
+	}()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(tempFile, io.TeeReader(body, hasher)); err != nil {
+		return "", "", fmt.Errorf("write temp archive: %w", err)
+	}
+
+	success = true
+
+	return tempPath, hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 func replaceExecutable(archive io.Reader, executablePath string) error {
