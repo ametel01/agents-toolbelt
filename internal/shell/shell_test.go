@@ -34,7 +34,7 @@ func TestSuggestions(t *testing.T) {
 	suggestions := Suggestions([]catalog.Tool{
 		{ID: "direnv", Name: "direnv", ShellHook: "required"},
 		{ID: "jq", Name: "jq", ShellHook: "none"},
-	})
+	}, state.State{})
 
 	if len(suggestions) != 1 {
 		t.Fatalf("len(Suggestions()) = %d, want 1", len(suggestions))
@@ -42,6 +42,110 @@ func TestSuggestions(t *testing.T) {
 
 	if suggestions[0].InitLine != "eval \"$(direnv hook zsh)\"" {
 		t.Fatalf("suggestions[0].InitLine = %q", suggestions[0].InitLine)
+	}
+}
+
+func TestSuggestionsSkipsAlreadyApplied(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("SHELL", "/bin/bash")
+
+	st := state.State{Version: 1, Tools: map[string]state.ToolState{
+		"direnv": {ToolID: "direnv", ShellHookStatus: shellHookApplied},
+	}}
+
+	suggestions := Suggestions([]catalog.Tool{
+		{ID: "direnv", Name: "direnv", ShellHook: "required"},
+	}, st)
+
+	if len(suggestions) != 0 {
+		t.Fatalf("len(Suggestions()) = %d, want 0 for already applied", len(suggestions))
+	}
+}
+
+func TestSuggestionsSkipsDeclined(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("SHELL", "/bin/bash")
+
+	st := state.State{Version: 1, Tools: map[string]state.ToolState{
+		"direnv": {ToolID: "direnv", ShellHookStatus: shellHookDeclined},
+	}}
+
+	suggestions := Suggestions([]catalog.Tool{
+		{ID: "direnv", Name: "direnv", ShellHook: "required"},
+	}, st)
+
+	if len(suggestions) != 0 {
+		t.Fatalf("len(Suggestions()) = %d, want 0 for declined", len(suggestions))
+	}
+}
+
+func TestSuggestionsIncludesPreviouslySuggested(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("SHELL", "/bin/bash")
+
+	st := state.State{Version: 1, Tools: map[string]state.ToolState{
+		"direnv": {ToolID: "direnv", ShellHookStatus: shellHookSuggested},
+	}}
+
+	suggestions := Suggestions([]catalog.Tool{
+		{ID: "direnv", Name: "direnv", ShellHook: "required"},
+	}, st)
+
+	if len(suggestions) != 1 {
+		t.Fatalf("len(Suggestions()) = %d, want 1 for previously suggested", len(suggestions))
+	}
+}
+
+func TestApplyReconcilesToAppliedWhenLineAlreadyExists(t *testing.T) {
+	homeDir := t.TempDir()
+	t.Setenv("HOME", homeDir)
+	t.Setenv("SHELL", "/bin/bash")
+
+	rcFile := filepath.Join(homeDir, ".bashrc")
+	initLine := `eval "$(direnv hook bash)"`
+
+	// Pre-populate the rc file with the init line already present.
+	//nolint:gosec // Test fixture written to a temp directory.
+	if err := os.WriteFile(rcFile, []byte(initLine+"\n"), 0o644); err != nil {
+		t.Fatalf("os.WriteFile() error = %v", err)
+	}
+
+	st := state.State{Version: 1, Tools: map[string]state.ToolState{
+		"direnv": {ToolID: "direnv", ShellHookStatus: shellHookSuggested},
+	}}
+
+	suggestions := []Suggestion{{
+		ToolID:   "direnv",
+		ToolName: "direnv",
+		Shell:    "bash",
+		RCFile:   rcFile,
+		InitLine: initLine,
+		Required: true,
+	}}
+
+	if err := ApplyConfirmedSuggestions(suggestions, &st); err != nil {
+		t.Fatalf("ApplyConfirmedSuggestions() error = %v", err)
+	}
+
+	// File should still have exactly one copy of the line.
+	//nolint:gosec // The rc file path is derived from the test temp HOME.
+	data, err := os.ReadFile(rcFile)
+	if err != nil {
+		t.Fatalf("os.ReadFile(%q) error = %v", rcFile, err)
+	}
+
+	if strings.Count(string(data), initLine) != 1 {
+		t.Fatalf("rc file contents = %q, want exactly one init line", string(data))
+	}
+
+	// State must be reconciled to "applied" even though the line already existed.
+	receipt, ok := st.Tool("direnv")
+	if !ok {
+		t.Fatal("state.Tool(\"direnv\") did not find a receipt")
+	}
+
+	if receipt.ShellHookStatus != shellHookApplied {
+		t.Fatalf("receipt.ShellHookStatus = %q, want %q", receipt.ShellHookStatus, shellHookApplied)
 	}
 }
 
