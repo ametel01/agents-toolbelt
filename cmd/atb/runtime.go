@@ -115,6 +115,10 @@ func runInstall(ctx context.Context, stdout, stderr io.Writer, yes bool) error {
 
 	targets, err := selectTargets(yes)
 	if err != nil {
+		if saveErr := state.Save(installCtx.stateData); saveErr != nil {
+			return wrapError("save state after target selection failure", saveErr)
+		}
+
 		return wrapError("select skill targets", err)
 	}
 
