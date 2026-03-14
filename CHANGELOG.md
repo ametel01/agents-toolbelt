@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-03-14
+
 ### Added
 - Release checksums (`checksums.txt`) are now published for all binaries, signed with cosign via Sigstore keyless signing, and accompanied by SLSA build provenance attestation.
 - `scripts/install.sh` now verifies the SHA256 checksum of the downloaded archive before installing.
