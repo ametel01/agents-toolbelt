@@ -8,6 +8,10 @@ GOVULNCHECK := $(TOOLS_BIN)/govulncheck
 export GOBIN := $(TOOLS_BIN)
 export PATH := $(TOOLS_BIN):$(PATH)
 
+STATICCHECK_VERSION ?= 2025.1.1
+GOLANGCI_LINT_VERSION ?= v2.11.3
+GOVULNCHECK_VERSION ?= v1.1.4
+
 .PHONY: help verify fmt vet lint test build run vulncheck tools check-go
 
 RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -67,8 +71,8 @@ vulncheck: tools
 
 tools:
 	@mkdir -p "$(TOOLS_BIN)"
-	@test -x "$(STATICCHECK)" || $(GO) install honnef.co/go/tools/cmd/staticcheck@latest
-	@if [[ ! -x "$(GOLANGCI_LINT)" ]] || ! "$(GOLANGCI_LINT)" --version 2>/dev/null | grep -q "version 2\\."; then \
-		$(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest; \
+	@test -x "$(STATICCHECK)" || $(GO) install honnef.co/go/tools/cmd/staticcheck@$(STATICCHECK_VERSION)
+	@if [[ ! -x "$(GOLANGCI_LINT)" ]] || ! "$(GOLANGCI_LINT)" --version 2>/dev/null | grep -q "$(GOLANGCI_LINT_VERSION)"; then \
+		$(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION); \
 	fi
-	@test -x "$(GOVULNCHECK)" || $(GO) install golang.org/x/vuln/cmd/govulncheck@latest
+	@test -x "$(GOVULNCHECK)" || $(GO) install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
