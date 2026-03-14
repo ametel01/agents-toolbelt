@@ -85,19 +85,17 @@ func Save(st State) error {
 }
 
 // Tool returns the persisted state for a tool ID, if present.
-func (s State) Tool(id string) (*ToolState, bool) {
+func (s State) Tool(id string) (ToolState, bool) {
 	if len(s.Tools) == 0 {
-		return nil, false
+		return ToolState{}, false
 	}
 
 	toolState, ok := s.Tools[id]
 	if !ok {
-		return nil, false
+		return ToolState{}, false
 	}
 
-	receipt := toolState
-
-	return &receipt, true
+	return toolState, true
 }
 
 // AddReceipt stores a managed tool receipt.
