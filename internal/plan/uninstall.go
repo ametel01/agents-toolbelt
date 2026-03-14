@@ -2,6 +2,7 @@ package plan
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/ametel01/agents-toolbelt/internal/catalog"
@@ -10,7 +11,10 @@ import (
 	"github.com/ametel01/agents-toolbelt/internal/state"
 )
 
-var errUninstallTargetsRequired = errors.New("provide at least one tool or use --all")
+var (
+	errUninstallTargetsRequired = errors.New("provide at least one tool or use --all")
+	errUnknownTool              = errors.New("unknown tool")
+)
 
 // BuildUninstallPlan creates an uninstall plan for managed tools only.
 func BuildUninstallPlan(
@@ -23,9 +27,17 @@ func BuildUninstallPlan(
 		return Plan{}, errUninstallTargetsRequired
 	}
 
+	if !uninstallAll {
+		for _, id := range toolIDs {
+			if !resolveSelector(snapshot, id) {
+				return Plan{}, fmt.Errorf("%w: %s", errUnknownTool, id)
+			}
+		}
+	}
+
 	actions := make([]Action, 0, len(snapshot.Tools))
 	for _, presence := range snapshot.Tools {
-		if !uninstallAll && !slices.Contains(toolIDs, presence.Tool.ID) {
+		if !uninstallAll && !matchesSelector(presence, toolIDs) {
 			continue
 		}
 
@@ -79,8 +91,34 @@ func methodForReceipt(tool catalog.Tool, installManager string, managers []pkgmg
 	return catalog.InstallMethod{}, nil, false
 }
 
-func shouldPlanTool(candidate, requested string) bool {
-	return requested == "" || candidate == requested
+// resolveSelector checks whether selector matches any tool in the snapshot by
+// ID or binary name.
+func resolveSelector(snapshot discovery.Snapshot, selector string) bool {
+	if _, ok := snapshot.Tools[selector]; ok {
+		return true
+	}
+
+	for _, presence := range snapshot.Tools {
+		if presence.Tool.Bin == selector {
+			return true
+		}
+	}
+
+	return false
+}
+
+func shouldPlanTool(presence discovery.ToolPresence, requested string) bool {
+	return requested == "" || presence.Tool.ID == requested || presence.Tool.Bin == requested
+}
+
+func matchesSelector(presence discovery.ToolPresence, selectors []string) bool {
+	for _, sel := range selectors {
+		if presence.Tool.ID == sel || presence.Tool.Bin == sel {
+			return true
+		}
+	}
+
+	return false
 }
 
 func sortActions(actions []Action) {

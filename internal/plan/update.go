@@ -1,6 +1,8 @@
 package plan
 
 import (
+	"fmt"
+
 	"github.com/ametel01/agents-toolbelt/internal/discovery"
 	"github.com/ametel01/agents-toolbelt/internal/pkgmgr"
 	"github.com/ametel01/agents-toolbelt/internal/state"
@@ -8,10 +10,14 @@ import (
 
 // BuildUpdatePlan creates an update plan for atb-managed tools.
 func BuildUpdatePlan(snapshot discovery.Snapshot, managers []pkgmgr.Manager, toolID string) (Plan, error) {
+	if toolID != "" && !resolveSelector(snapshot, toolID) {
+		return Plan{}, fmt.Errorf("%w: %s", errUnknownTool, toolID)
+	}
+
 	actions := make([]Action, 0, len(snapshot.Tools))
 
 	for _, presence := range snapshot.Tools {
-		if !shouldPlanTool(presence.Tool.ID, toolID) {
+		if !shouldPlanTool(presence, toolID) {
 			continue
 		}
 
