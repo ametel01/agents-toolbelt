@@ -97,6 +97,40 @@ resolve_install_dir() {
   echo "${HOME}/.local/bin"
 }
 
+verify_checksum() {
+  local file="$1"
+  local checksums="$2"
+  local name="$3"
+
+  local expected
+  expected="$(grep "  ${name}$" "$checksums" | head -n1 | cut -d' ' -f1)"
+
+  if [[ -z "$expected" ]]; then
+    fail \
+      "checksum not found for ${name} in checksums.txt" \
+      "the release may be incomplete or the asset name may not match"
+  fi
+
+  local actual
+  if command -v sha256sum >/dev/null 2>&1; then
+    actual="$(sha256sum "$file" | cut -d' ' -f1)"
+  elif command -v shasum >/dev/null 2>&1; then
+    actual="$(shasum -a 256 "$file" | cut -d' ' -f1)"
+  else
+    fail \
+      "no sha256 utility found" \
+      "install sha256sum or shasum and rerun the installer"
+  fi
+
+  if [[ "$actual" != "$expected" ]]; then
+    fail \
+      "checksum verification failed for ${name}" \
+      "expected: ${expected}" \
+      "actual:   ${actual}" \
+      "the download may be corrupted or tampered with"
+  fi
+}
+
 install_binary() {
   local source_path="$1"
   local target_path="${install_dir}/${binary_name}"
@@ -144,12 +178,24 @@ main() {
   tmpdir="$(mktemp -d)"
   trap cleanup EXIT
 
+  local checksums_url
+  checksums_url="$(download_url "checksums.txt")"
+
+  if ! curl -fsSL "$checksums_url" -o "${tmpdir}/checksums.txt"; then
+    fail \
+      "failed to download checksums: $checksums_url" \
+      "check your network connection and confirm the requested release exists" \
+      "if you set ATB_VERSION, verify that the tag is published in GitHub releases"
+  fi
+
   if ! curl -fsSL "$url" -o "${tmpdir}/${archive}"; then
     fail \
       "failed to download release archive: $url" \
       "check your network connection and confirm the requested release exists" \
       "if you set ATB_VERSION, verify that the tag is published in GitHub releases"
   fi
+
+  verify_checksum "${tmpdir}/${archive}" "${tmpdir}/checksums.txt" "$archive"
 
   if ! tar -xzf "${tmpdir}/${archive}" -C "$tmpdir"; then
     fail \
