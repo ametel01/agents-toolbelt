@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Managed update and uninstall now prefer lifecycle commands stored in install receipts instead of always re-selecting from the current catalog, preventing breakage when the catalog changes after install.
 - Shell-hook detection now matches exact uncommented lines instead of any substring, preventing commented-out hooks from blocking real hook installation.
 - Dependency bootstrap failures now stop the install flow instead of being logged and silently ignored, preventing confusing downstream tool-install failures when a required prerequisite is missing.
 - Install state (receipts and shell-hook decisions) is now persisted even when the skill-target picker is canceled or errors, preventing silent data loss after successful installs.

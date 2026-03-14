@@ -51,7 +51,7 @@ func BuildUninstallPlan(
 			continue
 		}
 
-		method, manager, ok := methodForReceipt(presence.Tool, presence.Receipt.InstallManager, managers)
+		method, manager, ok := methodForReceipt(presence.Tool, presence.Receipt, managers)
 		if !ok {
 			actions = append(actions, Action{
 				Tool:   presence.Tool,
@@ -75,20 +75,49 @@ func BuildUninstallPlan(
 	return Plan{Actions: actions}, nil
 }
 
-func methodForReceipt(tool catalog.Tool, installManager string, managers []pkgmgr.Manager) (catalog.InstallMethod, pkgmgr.Manager, bool) {
-	for _, manager := range managers {
-		if manager.Name() != installManager {
-			continue
-		}
+func methodForReceipt(
+	tool catalog.Tool,
+	receipt *state.ToolState,
+	managers []pkgmgr.Manager,
+) (catalog.InstallMethod, pkgmgr.Manager, bool) {
+	manager := findManager(receipt.InstallManager, managers)
+	if manager == nil {
+		return catalog.InstallMethod{}, nil, false
+	}
 
-		for _, method := range tool.InstallMethods {
-			if method.Manager == installManager {
-				return method, manager, true
-			}
+	if hasStoredCommands(receipt) {
+		return catalog.InstallMethod{
+			Manager:          receipt.InstallManager,
+			Package:          receipt.InstallPackage,
+			Command:          receipt.InstallCommand,
+			UpdateCommand:    receipt.UpdateCommand,
+			UninstallCommand: receipt.UninstallCommand,
+		}, manager, true
+	}
+
+	for _, method := range tool.InstallMethods {
+		if method.Manager == receipt.InstallManager {
+			return method, manager, true
 		}
 	}
 
 	return catalog.InstallMethod{}, nil, false
+}
+
+func findManager(name string, managers []pkgmgr.Manager) pkgmgr.Manager {
+	for _, m := range managers {
+		if m.Name() == name {
+			return m
+		}
+	}
+
+	return nil
+}
+
+func hasStoredCommands(receipt *state.ToolState) bool {
+	return len(receipt.InstallCommand) > 0 ||
+		len(receipt.UpdateCommand) > 0 ||
+		len(receipt.UninstallCommand) > 0
 }
 
 // resolveSelector checks whether selector matches any tool in the snapshot by

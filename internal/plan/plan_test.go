@@ -277,6 +277,114 @@ func TestBuildUninstallPlanUnknownToolReturnsError(t *testing.T) {
 	}
 }
 
+func TestBuildUpdatePlanPrefersReceiptCommands(t *testing.T) {
+	t.Parallel()
+
+	registry := mustLoadRegistry(t)
+	rg := mustTool(t, registry, "rg")
+
+	snapshot := discovery.Snapshot{
+		Tools: map[string]discovery.ToolPresence{
+			"rg": {
+				Tool:      rg,
+				Ownership: state.OwnershipManaged,
+				Receipt: &state.ToolState{
+					ToolID:         "rg",
+					Ownership:      state.OwnershipManaged,
+					InstallManager: "brew",
+					InstallCommand: []string{"brew", "install", "ripgrep-custom"},
+					UpdateCommand:  []string{"brew", "upgrade", "ripgrep-custom"},
+				},
+			},
+		},
+	}
+
+	plan, err := BuildUpdatePlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, "")
+	if err != nil {
+		t.Fatalf("BuildUpdatePlan() error = %v", err)
+	}
+
+	if len(plan.Actions) != 1 {
+		t.Fatalf("len(plan.Actions) = %d, want 1", len(plan.Actions))
+	}
+
+	if plan.Actions[0].Method.UpdateCommand[2] != "ripgrep-custom" {
+		t.Fatalf("plan.Actions[0].Method.UpdateCommand = %v, want receipt-stored command", plan.Actions[0].Method.UpdateCommand)
+	}
+}
+
+func TestBuildUninstallPlanPrefersReceiptCommands(t *testing.T) {
+	t.Parallel()
+
+	registry := mustLoadRegistry(t)
+	rg := mustTool(t, registry, "rg")
+
+	snapshot := discovery.Snapshot{
+		Tools: map[string]discovery.ToolPresence{
+			"rg": {
+				Tool:      rg,
+				Ownership: state.OwnershipManaged,
+				Receipt: &state.ToolState{
+					ToolID:           "rg",
+					Ownership:        state.OwnershipManaged,
+					InstallManager:   "brew",
+					InstallCommand:   []string{"brew", "install", "ripgrep-custom"},
+					UninstallCommand: []string{"brew", "uninstall", "ripgrep-custom"},
+				},
+			},
+		},
+	}
+
+	plan, err := BuildUninstallPlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, []string{"rg"}, false)
+	if err != nil {
+		t.Fatalf("BuildUninstallPlan() error = %v", err)
+	}
+
+	if len(plan.Actions) != 1 {
+		t.Fatalf("len(plan.Actions) = %d, want 1", len(plan.Actions))
+	}
+
+	if plan.Actions[0].Method.UninstallCommand[2] != "ripgrep-custom" {
+		t.Fatalf("plan.Actions[0].Method.UninstallCommand = %v, want receipt-stored command", plan.Actions[0].Method.UninstallCommand)
+	}
+}
+
+func TestBuildUpdatePlanFallsToCatalogWithoutReceiptCommands(t *testing.T) {
+	t.Parallel()
+
+	registry := mustLoadRegistry(t)
+	rg := mustTool(t, registry, "rg")
+
+	snapshot := discovery.Snapshot{
+		Tools: map[string]discovery.ToolPresence{
+			"rg": {
+				Tool:      rg,
+				Ownership: state.OwnershipManaged,
+				Receipt: &state.ToolState{
+					ToolID:         "rg",
+					Ownership:      state.OwnershipManaged,
+					InstallManager: "brew",
+					// No stored commands — should fall back to catalog.
+				},
+			},
+		},
+	}
+
+	plan, err := BuildUpdatePlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, "")
+	if err != nil {
+		t.Fatalf("BuildUpdatePlan() error = %v", err)
+	}
+
+	if len(plan.Actions) != 1 {
+		t.Fatalf("len(plan.Actions) = %d, want 1", len(plan.Actions))
+	}
+
+	// Should fall back to catalog method.
+	if plan.Actions[0].Method.Manager != "brew" {
+		t.Fatalf("plan.Actions[0].Method.Manager = %q, want %q", plan.Actions[0].Method.Manager, "brew")
+	}
+}
+
 func TestBuildUninstallPlanMatchesByBinaryName(t *testing.T) {
 	t.Parallel()
 

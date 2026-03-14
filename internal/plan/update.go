@@ -25,7 +25,7 @@ func BuildUpdatePlan(snapshot discovery.Snapshot, managers []pkgmgr.Manager, too
 			continue
 		}
 
-		method, manager, ok := methodForReceipt(presence.Tool, presence.Receipt.InstallManager, managers)
+		method, manager, ok := methodForReceipt(presence.Tool, presence.Receipt, managers)
 		if !ok {
 			actions = append(actions, Action{
 				Tool:   presence.Tool,
