@@ -50,7 +50,7 @@ vet:
 
 lint: tools
 	@$(STATICCHECK) ./...
-	@./hack/run-golangci-lint.sh "$(GOLANGCI_LINT)"
+	@$(GOLANGCI_LINT) run
 
 test:
 	@$(GO) test ./...
