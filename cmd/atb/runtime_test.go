@@ -220,6 +220,37 @@ func TestFinishInstallPersistsStateWithNormalTargets(t *testing.T) {
 	}
 }
 
+func TestConfirmApplyFromInjectedInput(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		want  bool
+	}{
+		{"yes", "y\n", true},
+		{"YES", "YES\n", true},
+		{"no", "n\n", false},
+		{"empty", "\n", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var stdout bytes.Buffer
+			got, err := confirmApply(strings.NewReader(tt.input), &stdout)
+			if err != nil {
+				t.Fatalf("confirmApply() error = %v", err)
+			}
+
+			if got != tt.want {
+				t.Fatalf("confirmApply() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestResolveStoredTargets(t *testing.T) {
 	t.Parallel()
 

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"runtime"
 	"slices"
@@ -71,7 +70,7 @@ func (liveVerifier) Check(ctx context.Context, tool catalog.Tool) (verify.Verify
 	return result, nil
 }
 
-func runInstall(ctx context.Context, stdout, stderr io.Writer, yes bool) error {
+func runInstall(ctx context.Context, stdin io.Reader, stdout, stderr io.Writer, yes bool) error {
 	installCtx, err := prepareInstall(stderr, yes)
 	if err != nil {
 		return err
@@ -110,7 +109,7 @@ func runInstall(ctx context.Context, stdout, stderr io.Writer, yes bool) error {
 		return wrapError("execute install plan", err)
 	}
 
-	if err := applyShellWorkflow(stdout, yes, &installCtx.stateData, installCtx.selected); err != nil {
+	if err := applyShellWorkflow(stdin, stdout, yes, &installCtx.stateData, installCtx.selected); err != nil {
 		return wrapError("apply shell workflow", err)
 	}
 
@@ -427,7 +426,7 @@ func runUninstall(ctx context.Context, stdout, stderr io.Writer, toolIDs []strin
 	return nil
 }
 
-func applyShellWorkflow(stdout io.Writer, yes bool, st *state.State, tools []catalog.Tool) error {
+func applyShellWorkflow(stdin io.Reader, stdout io.Writer, yes bool, st *state.State, tools []catalog.Tool) error {
 	suggestions := shell.Suggestions(tools)
 	if len(suggestions) == 0 {
 		return nil
@@ -440,7 +439,7 @@ func applyShellWorkflow(stdout io.Writer, yes bool, st *state.State, tools []cat
 		return nil
 	}
 
-	apply, err := confirmApply(stdout)
+	apply, err := confirmApply(stdin, stdout)
 	if err != nil {
 		return wrapError("confirm shell hook application", err)
 	}
@@ -454,12 +453,12 @@ func applyShellWorkflow(stdout io.Writer, yes bool, st *state.State, tools []cat
 	return wrapError("apply shell hook suggestions", shell.ApplyConfirmedSuggestions(suggestions, st))
 }
 
-func confirmApply(stdout io.Writer) (bool, error) {
+func confirmApply(stdin io.Reader, stdout io.Writer) (bool, error) {
 	if _, err := fmt.Fprint(stdout, "Apply shell hook suggestions now? [y/N]: "); err != nil {
 		return false, wrapError("write shell hook prompt", err)
 	}
 
-	reader := bufio.NewReader(os.Stdin)
+	reader := bufio.NewReader(stdin)
 	answer, err := reader.ReadString('\n')
 	if err != nil {
 		return false, fmt.Errorf("read shell hook confirmation: %w", err)
