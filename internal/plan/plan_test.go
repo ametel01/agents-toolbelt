@@ -234,6 +234,40 @@ func TestBuildUpdatePlanUnknownToolReturnsError(t *testing.T) {
 	}
 }
 
+func TestBuildUpdatePlanExternalToolReturnsSkip(t *testing.T) {
+	t.Parallel()
+
+	registry := mustLoadRegistry(t)
+	tool := mustTool(t, registry, "jq")
+
+	snapshot := discovery.Snapshot{
+		Tools: map[string]discovery.ToolPresence{
+			"jq": {
+				Tool:      tool,
+				Installed: true,
+				Ownership: state.OwnershipExternal,
+			},
+		},
+	}
+
+	plan, err := BuildUpdatePlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, "jq")
+	if err != nil {
+		t.Fatalf("BuildUpdatePlan() error = %v", err)
+	}
+
+	if len(plan.Actions) != 1 {
+		t.Fatalf("len(actions) = %d, want 1", len(plan.Actions))
+	}
+
+	if plan.Actions[0].Type != ActionSkip {
+		t.Fatalf("action type = %q, want %q", plan.Actions[0].Type, ActionSkip)
+	}
+
+	if plan.Actions[0].Reason != "tool is not managed by atb" {
+		t.Fatalf("action reason = %q, want %q", plan.Actions[0].Reason, "tool is not managed by atb")
+	}
+}
+
 func TestBuildUpdatePlanMatchesByBinaryName(t *testing.T) {
 	t.Parallel()
 
