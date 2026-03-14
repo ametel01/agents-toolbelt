@@ -42,7 +42,8 @@ func DetectShell() string {
 }
 
 // Suggestions returns init-line suggestions for tools with shell hooks.
-func Suggestions(tools []catalog.Tool) []Suggestion {
+// Tools whose hook status is already "applied" or "declined" are skipped.
+func Suggestions(tools []catalog.Tool, st state.State) []Suggestion {
 	shellName := DetectShell()
 	rcFile, err := rcFileForShell(shellName)
 	if err != nil {
@@ -53,6 +54,12 @@ func Suggestions(tools []catalog.Tool) []Suggestion {
 	for _, tool := range tools {
 		if tool.ShellHook != "required" && tool.ShellHook != "optional" {
 			continue
+		}
+
+		if receipt, ok := st.Tool(tool.ID); ok {
+			if receipt.ShellHookStatus == shellHookApplied || receipt.ShellHookStatus == shellHookDeclined {
+				continue
+			}
 		}
 
 		initLine, ok := initLineForTool(tool.ID, shellName)
@@ -74,16 +81,14 @@ func Suggestions(tools []catalog.Tool) []Suggestion {
 }
 
 // ApplyConfirmedSuggestions appends missing init lines and records applied state.
+// State is reconciled to "applied" even when the line already exists in the rc file.
 func ApplyConfirmedSuggestions(suggestions []Suggestion, st *state.State) error {
 	for _, suggestion := range suggestions {
-		written, err := appendInitLine(suggestion.RCFile, suggestion.InitLine)
-		if err != nil {
+		if _, err := appendInitLine(suggestion.RCFile, suggestion.InitLine); err != nil {
 			return err
 		}
 
-		if written {
-			recordHookStatus(st, suggestion.ToolID, shellHookApplied, time.Now().UTC())
-		}
+		recordHookStatus(st, suggestion.ToolID, shellHookApplied, time.Now().UTC())
 	}
 
 	return nil

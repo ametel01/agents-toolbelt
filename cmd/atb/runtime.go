@@ -451,7 +451,7 @@ func runUninstall(ctx context.Context, stdout, stderr io.Writer, toolIDs []strin
 }
 
 func applyShellWorkflow(stdin io.Reader, stdout io.Writer, yes bool, st *state.State, tools []catalog.Tool) error {
-	suggestions := shell.Suggestions(tools)
+	suggestions := shell.Suggestions(tools, *st)
 	if len(suggestions) == 0 {
 		return nil
 	}
