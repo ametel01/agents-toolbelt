@@ -101,7 +101,12 @@ install_binary() {
   local source_path="$1"
   local target_path="${install_dir}/${binary_name}"
 
-  mkdir -p "$install_dir" 2>/dev/null || true
+  if ! mkdir -p "$install_dir" 2>&1; then
+    fail \
+      "failed to create install directory: $install_dir" \
+      "check that the parent directory exists and you have write permission" \
+      "set ATB_INSTALL_DIR to a writable directory on your PATH"
+  fi
 
   if [[ -w "$install_dir" ]]; then
     install -m 0755 "$source_path" "$target_path"
