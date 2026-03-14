@@ -113,7 +113,12 @@ func runInstall(ctx context.Context, stdout, stderr io.Writer, yes bool) error {
 		return wrapError("apply shell workflow", err)
 	}
 
-	if err := finishInstall(ctx, stdout, yes, &installCtx); err != nil {
+	targets, err := selectTargets(yes)
+	if err != nil {
+		return wrapError("select skill targets", err)
+	}
+
+	if err := finishInstall(ctx, stdout, &installCtx, targets); err != nil {
 		return err
 	}
 
@@ -141,13 +146,12 @@ func bootstrapDependencies(ctx context.Context, stdout io.Writer, installCtx *in
 	return nil
 }
 
-func finishInstall(ctx context.Context, stdout io.Writer, yes bool, installCtx *installContext) error {
-	targets, err := selectTargets(yes)
-	if err != nil {
-		return wrapError("select skill targets", err)
-	}
-
+func finishInstall(ctx context.Context, stdout io.Writer, installCtx *installContext, targets []skill.Target) error {
 	if len(targets) == 0 {
+		if err := state.Save(installCtx.stateData); err != nil {
+			return wrapError("save state", err)
+		}
+
 		_, writeErr := fmt.Fprintln(stdout, "Skill generation skipped.")
 
 		return wrapError("write skip message", writeErr)

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ametel01/agents-toolbelt/internal/catalog"
+	"github.com/ametel01/agents-toolbelt/internal/skill"
 	"github.com/ametel01/agents-toolbelt/internal/state"
 	"github.com/ametel01/agents-toolbelt/internal/verify"
 )
@@ -72,6 +73,97 @@ func TestRefreshVerifiedToolsIncludesExternalTools(t *testing.T) {
 
 	if jqReceipt.Ownership != state.OwnershipManaged {
 		t.Fatalf("jq ownership = %q, want %q", jqReceipt.Ownership, state.OwnershipManaged)
+	}
+}
+
+func TestFinishInstallPersistsStateWhenTargetsCanceled(t *testing.T) {
+	configDir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", configDir)
+
+	installCtx := &installContext{
+		registry: mustLoadRegistry(t),
+		stateData: state.State{
+			Version: 1,
+			Tools: map[string]state.ToolState{
+				"jq": {
+					ToolID:          "jq",
+					Bin:             "jq",
+					Ownership:       state.OwnershipManaged,
+					InstallManager:  "brew",
+					ShellHookStatus: "applied",
+				},
+			},
+		},
+	}
+
+	var stdout bytes.Buffer
+
+	// nil targets simulates the user canceling the target picker.
+	if err := finishInstall(context.Background(), &stdout, installCtx, nil); err != nil {
+		t.Fatalf("finishInstall() error = %v", err)
+	}
+
+	if !bytes.Contains(stdout.Bytes(), []byte("Skill generation skipped.")) {
+		t.Fatalf("stdout = %q, want skip message", stdout.String())
+	}
+
+	statePath := filepath.Join(configDir, "atb", "state.json")
+	saved, err := os.ReadFile(statePath)
+	if err != nil {
+		t.Fatalf("state file not written: %v", err)
+	}
+
+	if !bytes.Contains(saved, []byte(`"jq"`)) {
+		t.Fatalf("saved state missing jq receipt: %s", saved)
+	}
+
+	if !bytes.Contains(saved, []byte(`"applied"`)) {
+		t.Fatalf("saved state missing shell hook status: %s", saved)
+	}
+}
+
+func TestFinishInstallPersistsStateWithNormalTargets(t *testing.T) {
+	registry := mustLoadRegistry(t)
+	configDir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", configDir)
+
+	homeDir := t.TempDir()
+	t.Setenv("HOME", homeDir)
+
+	tempDir := t.TempDir()
+	t.Setenv("PATH", tempDir)
+	createExecutable(t, filepath.Join(tempDir, "jq"))
+
+	installCtx := &installContext{
+		registry: registry,
+		stateData: state.State{
+			Version: 1,
+			Tools: map[string]state.ToolState{
+				"jq": {
+					ToolID:         "jq",
+					Bin:            "jq",
+					Ownership:      state.OwnershipManaged,
+					InstallManager: "brew",
+				},
+			},
+		},
+	}
+
+	var stdout bytes.Buffer
+
+	targets := []skill.Target{{
+		ID:      "test",
+		Name:    "Test",
+		RelPath: filepath.Join(".claude", "skills", "cli-tools", "SKILL.md"),
+	}}
+
+	if err := finishInstall(context.Background(), &stdout, installCtx, targets); err != nil {
+		t.Fatalf("finishInstall() error = %v", err)
+	}
+
+	statePath := filepath.Join(configDir, "atb", "state.json")
+	if _, err := os.ReadFile(statePath); err != nil {
+		t.Fatalf("state file not written on normal path: %v", err)
 	}
 }
 
