@@ -77,8 +77,9 @@ func TestRefreshVerifiedToolsIncludesExternalTools(t *testing.T) {
 }
 
 func TestFinishInstallPersistsStateWhenTargetsCanceled(t *testing.T) {
-	configDir := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", configDir)
+	homeDir := t.TempDir()
+	t.Setenv("HOME", homeDir)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(homeDir, ".config"))
 
 	installCtx := &installContext{
 		registry: mustLoadRegistry(t),
@@ -107,7 +108,11 @@ func TestFinishInstallPersistsStateWhenTargetsCanceled(t *testing.T) {
 		t.Fatalf("stdout = %q, want skip message", stdout.String())
 	}
 
-	statePath := filepath.Join(configDir, "atb", "state.json")
+	statePath, err := state.DefaultPath()
+	if err != nil {
+		t.Fatalf("state.DefaultPath() error = %v", err)
+	}
+
 	//nolint:gosec // Test reads from a controlled temp directory.
 	saved, err := os.ReadFile(statePath)
 	if err != nil {
@@ -125,11 +130,9 @@ func TestFinishInstallPersistsStateWhenTargetsCanceled(t *testing.T) {
 
 func TestFinishInstallPersistsStateWithNormalTargets(t *testing.T) {
 	registry := mustLoadRegistry(t)
-	configDir := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", configDir)
-
 	homeDir := t.TempDir()
 	t.Setenv("HOME", homeDir)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(homeDir, ".config"))
 
 	tempDir := t.TempDir()
 	t.Setenv("PATH", tempDir)
@@ -162,7 +165,11 @@ func TestFinishInstallPersistsStateWithNormalTargets(t *testing.T) {
 		t.Fatalf("finishInstall() error = %v", err)
 	}
 
-	statePath := filepath.Join(configDir, "atb", "state.json")
+	statePath, err := state.DefaultPath()
+	if err != nil {
+		t.Fatalf("state.DefaultPath() error = %v", err)
+	}
+
 	//nolint:gosec // Test reads from a controlled temp directory.
 	if _, err := os.ReadFile(statePath); err != nil {
 		t.Fatalf("state file not written on normal path: %v", err)
