@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-03-14
+
+### Fixed
+- `atb update` now accepts released binary versions reported without a leading `v`, allowing self-update to work correctly for installs that report versions such as `0.2.0`.
+
 ## [0.3.0] - 2026-03-14
 
 ### Changed
