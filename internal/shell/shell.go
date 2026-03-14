@@ -76,11 +76,14 @@ func Suggestions(tools []catalog.Tool) []Suggestion {
 // ApplyConfirmedSuggestions appends missing init lines and records applied state.
 func ApplyConfirmedSuggestions(suggestions []Suggestion, st *state.State) error {
 	for _, suggestion := range suggestions {
-		if err := appendInitLine(suggestion.RCFile, suggestion.InitLine); err != nil {
+		written, err := appendInitLine(suggestion.RCFile, suggestion.InitLine)
+		if err != nil {
 			return err
 		}
 
-		recordHookStatus(st, suggestion.ToolID, shellHookApplied, time.Now().UTC())
+		if written {
+			recordHookStatus(st, suggestion.ToolID, shellHookApplied, time.Now().UTC())
+		}
 	}
 
 	return nil
@@ -100,7 +103,7 @@ func MarkSuggestedSuggestions(suggestions []Suggestion, st *state.State) {
 	}
 }
 
-func appendInitLine(path, initLine string) error {
+func appendInitLine(path, initLine string) (bool, error) {
 	//nolint:gosec // The rc file path is derived from the detected shell and user home directory.
 	content, err := os.ReadFile(path)
 	switch {
@@ -108,15 +111,15 @@ func appendInitLine(path, initLine string) error {
 	case os.IsNotExist(err):
 		content = nil
 	default:
-		return fmt.Errorf("read rc file %s: %w", path, err)
+		return false, fmt.Errorf("read rc file %s: %w", path, err)
 	}
 
-	if strings.Contains(string(content), initLine) {
-		return nil
+	if containsUncommentedLine(string(content), initLine) {
+		return false, nil
 	}
 
 	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
-		return fmt.Errorf("create rc file directory for %s: %w", path, err)
+		return false, fmt.Errorf("create rc file directory for %s: %w", path, err)
 	}
 
 	var builder strings.Builder
@@ -130,7 +133,7 @@ func appendInitLine(path, initLine string) error {
 
 	tempFile, err := os.CreateTemp(filepath.Dir(path), ".rc-*.tmp")
 	if err != nil {
-		return fmt.Errorf("create temp rc file for %s: %w", path, err)
+		return false, fmt.Errorf("create temp rc file for %s: %w", path, err)
 	}
 
 	tempPath := tempFile.Name()
@@ -138,22 +141,39 @@ func appendInitLine(path, initLine string) error {
 		_ = tempFile.Close()
 		_ = os.Remove(tempPath)
 
-		return fmt.Errorf("write temp rc file for %s: %w", path, err)
+		return false, fmt.Errorf("write temp rc file for %s: %w", path, err)
 	}
 
 	if err := tempFile.Close(); err != nil {
 		_ = os.Remove(tempPath)
 
-		return fmt.Errorf("close temp rc file for %s: %w", path, err)
+		return false, fmt.Errorf("close temp rc file for %s: %w", path, err)
 	}
 
 	if err := os.Rename(tempPath, path); err != nil {
 		_ = os.Remove(tempPath)
 
-		return fmt.Errorf("rename temp rc file to %s: %w", path, err)
+		return false, fmt.Errorf("rename temp rc file to %s: %w", path, err)
 	}
 
-	return nil
+	return true, nil
+}
+
+// containsUncommentedLine reports whether any uncommented line in content
+// matches initLine exactly after trimming whitespace.
+func containsUncommentedLine(content, initLine string) bool {
+	for _, line := range strings.Split(content, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+
+		if trimmed == initLine {
+			return true
+		}
+	}
+
+	return false
 }
 
 func initLineForTool(toolID, shellName string) (string, bool) {
