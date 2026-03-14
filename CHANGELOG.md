@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Install state (receipts and shell-hook decisions) is now persisted even when the skill-target picker is canceled or errors, preventing silent data loss after successful installs.
+
 ## [0.3.1] - 2026-03-14
 
 ### Fixed
