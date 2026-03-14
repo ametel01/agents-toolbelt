@@ -108,6 +108,7 @@ func TestFinishInstallPersistsStateWhenTargetsCanceled(t *testing.T) {
 	}
 
 	statePath := filepath.Join(configDir, "atb", "state.json")
+	//nolint:gosec // Test reads from a controlled temp directory.
 	saved, err := os.ReadFile(statePath)
 	if err != nil {
 		t.Fatalf("state file not written: %v", err)
@@ -162,6 +163,7 @@ func TestFinishInstallPersistsStateWithNormalTargets(t *testing.T) {
 	}
 
 	statePath := filepath.Join(configDir, "atb", "state.json")
+	//nolint:gosec // Test reads from a controlled temp directory.
 	if _, err := os.ReadFile(statePath); err != nil {
 		t.Fatalf("state file not written on normal path: %v", err)
 	}
