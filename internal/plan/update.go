@@ -22,6 +22,14 @@ func BuildUpdatePlan(snapshot discovery.Snapshot, managers []pkgmgr.Manager, too
 		}
 
 		if presence.Ownership != state.OwnershipManaged || presence.Receipt == nil {
+			if toolID != "" {
+				actions = append(actions, Action{
+					Tool:   presence.Tool,
+					Type:   ActionSkip,
+					Reason: "tool is not managed by atb",
+				})
+			}
+
 			continue
 		}
 

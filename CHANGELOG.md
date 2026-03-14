@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `confirmApply` now reads from an injected `io.Reader` instead of hardcoding `os.Stdin`, improving testability and enabling non-interactive integrations.
 
 ### Fixed
+- Targeted updates of externally managed tools now return an explicit skip reason instead of a silent empty plan.
 - Shell-hook prompting now skips tools whose hooks have already been applied or declined, and reconciles state to `applied` when the init line is already present in the rc file.
 - Canceling the skill-target picker during install now persists an explicit opt-out, preventing `update tools` and `uninstall` from writing skill files into default agent directories.
 - Lifecycle state is now saved immediately after install, update, and uninstall plan execution, before shell-hook prompting and skill generation, preventing receipt loss when post-processing steps fail.
