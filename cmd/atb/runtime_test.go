@@ -7,10 +7,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/ametel01/agents-toolbelt/internal/catalog"
+	"github.com/ametel01/agents-toolbelt/internal/pkgmgr"
 	"github.com/ametel01/agents-toolbelt/internal/skill"
 	"github.com/ametel01/agents-toolbelt/internal/state"
 	"github.com/ametel01/agents-toolbelt/internal/verify"
@@ -191,6 +193,68 @@ func TestRunSelfUpdateRejectsDevelopmentBuilds(t *testing.T) {
 		t.Fatalf("runSelfUpdate() error = %v, want %v", err, errSelfUpdateDevBuild)
 	}
 }
+
+func TestInstallDependenciesStopsOnFailure(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+
+	dependencies := []pkgmgr.DependencyPlanItem{
+		{
+			Name:    "cargo",
+			Manager: failingManager{name: "apt"},
+			Method:  catalog.InstallMethod{Manager: "apt", Command: []string{"echo", "install"}},
+		},
+	}
+
+	err := installDependencies(context.Background(), &stdout, dependencies)
+	if !errors.Is(err, errDependencyBootstrapFailed) {
+		t.Fatalf("installDependencies() error = %v, want %v", err, errDependencyBootstrapFailed)
+	}
+
+	if !strings.Contains(err.Error(), "cargo") {
+		t.Fatalf("error = %q, want mention of failed dependency name", err)
+	}
+}
+
+func TestInstallDependenciesSucceedsWhenAllPass(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+
+	dependencies := []pkgmgr.DependencyPlanItem{
+		{
+			Name:    "go",
+			Manager: passingManager{name: "apt"},
+			Method:  catalog.InstallMethod{Manager: "apt", Command: []string{"echo", "install"}},
+		},
+	}
+
+	err := installDependencies(context.Background(), &stdout, dependencies)
+	if err != nil {
+		t.Fatalf("installDependencies() unexpected error = %v", err)
+	}
+}
+
+var errFakeInstall = errors.New("install failed")
+
+type failingManager struct{ name string }
+
+func (m failingManager) Name() string    { return m.name }
+func (m failingManager) Available() bool { return true }
+func (m failingManager) Install(_ context.Context, _ catalog.InstallMethod) error {
+	return errFakeInstall
+}
+func (m failingManager) Update(_ context.Context, _ catalog.InstallMethod) error    { return nil }
+func (m failingManager) Uninstall(_ context.Context, _ catalog.InstallMethod) error { return nil }
+
+type passingManager struct{ name string }
+
+func (m passingManager) Name() string                                               { return m.name }
+func (m passingManager) Available() bool                                            { return true }
+func (m passingManager) Install(_ context.Context, _ catalog.InstallMethod) error   { return nil }
+func (m passingManager) Update(_ context.Context, _ catalog.InstallMethod) error    { return nil }
+func (m passingManager) Uninstall(_ context.Context, _ catalog.InstallMethod) error { return nil }
 
 func mustLoadRegistry(t *testing.T) catalog.Registry {
 	t.Helper()

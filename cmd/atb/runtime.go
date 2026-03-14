@@ -28,6 +28,7 @@ import (
 )
 
 var (
+	errDependencyBootstrapFailed  = errors.New("dependency bootstrap failed")
 	errNoSupportedPackageManagers = errors.New("no supported package managers detected")
 	errSelfUpdateDevBuild         = errors.New("self-update is unavailable in development builds; use a released atb binary instead")
 )
@@ -685,6 +686,8 @@ func renderDependencyPlanPreview(stdout io.Writer, dependencies []pkgmgr.Depende
 }
 
 func installDependencies(ctx context.Context, stdout io.Writer, dependencies []pkgmgr.DependencyPlanItem) error {
+	var failed []string
+
 	for index, dependency := range dependencies {
 		if err := ctx.Err(); err != nil {
 			return fmt.Errorf("dependency install canceled: %w", err)
@@ -706,6 +709,8 @@ func installDependencies(ctx context.Context, stdout io.Writer, dependencies []p
 				return wrapError("write dependency failure", writeErr)
 			}
 
+			failed = append(failed, dependency.Name)
+
 			continue
 		}
 
@@ -718,6 +723,10 @@ func installDependencies(ctx context.Context, stdout io.Writer, dependencies []p
 		if _, err := fmt.Fprintln(stdout); err != nil {
 			return wrapError("write dependency spacing", err)
 		}
+	}
+
+	if len(failed) > 0 {
+		return fmt.Errorf("%w: %s", errDependencyBootstrapFailed, strings.Join(failed, ", "))
 	}
 
 	return nil
