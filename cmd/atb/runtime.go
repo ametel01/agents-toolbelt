@@ -162,6 +162,8 @@ func finishInstall(ctx context.Context, stdout io.Writer, installCtx *installCon
 		return wrapError("write skip message", writeErr)
 	}
 
+	installCtx.stateData.SkillTargets = targetIDs(targets)
+
 	if err := persistVerifiedSkill(ctx, installCtx.registry, &installCtx.stateData, liveVerifier{}, stdout, targets); err != nil {
 		return wrapError("persist verified skill", err)
 	}
@@ -368,7 +370,7 @@ func runToolUpdate(ctx context.Context, stdout, stderr io.Writer, toolID string)
 		return wrapError("execute update plan", err)
 	}
 
-	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, skill.AllTargets()); err != nil {
+	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, resolveStoredTargets(stateData)); err != nil {
 		return wrapError("persist verified skill", err)
 	}
 
@@ -416,7 +418,7 @@ func runUninstall(ctx context.Context, stdout, stderr io.Writer, toolIDs []strin
 		return wrapError("execute uninstall plan", err)
 	}
 
-	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, skill.AllTargets()); err != nil {
+	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, resolveStoredTargets(stateData)); err != nil {
 		return wrapError("persist verified skill", err)
 	}
 
@@ -536,6 +538,40 @@ func selectDependencies(selected []catalog.Tool, managers []pkgmgr.Manager, yes 
 	}
 
 	return selectedDependencies, nil
+}
+
+func resolveStoredTargets(st state.State) []skill.Target {
+	if len(st.SkillTargets) == 0 {
+		return skill.AllTargets()
+	}
+
+	all := skill.AllTargets()
+	targets := make([]skill.Target, 0, len(st.SkillTargets))
+
+	for _, id := range st.SkillTargets {
+		for _, target := range all {
+			if target.ID == id {
+				targets = append(targets, target)
+
+				break
+			}
+		}
+	}
+
+	if len(targets) == 0 {
+		return skill.AllTargets()
+	}
+
+	return targets
+}
+
+func targetIDs(targets []skill.Target) []string {
+	ids := make([]string, 0, len(targets))
+	for _, target := range targets {
+		ids = append(ids, target.ID)
+	}
+
+	return ids
 }
 
 func selectTargets(yes bool) ([]skill.Target, error) {
