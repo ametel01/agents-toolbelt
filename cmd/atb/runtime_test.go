@@ -178,6 +178,64 @@ func TestFinishInstallPersistsStateWithNormalTargets(t *testing.T) {
 	}
 }
 
+func TestResolveStoredTargets(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns all targets when state has no stored targets", func(t *testing.T) {
+		t.Parallel()
+
+		st := state.State{Version: 1}
+		targets := resolveStoredTargets(st)
+
+		if len(targets) != len(skill.AllTargets()) {
+			t.Fatalf("len(targets) = %d, want %d", len(targets), len(skill.AllTargets()))
+		}
+	})
+
+	t.Run("returns only stored targets", func(t *testing.T) {
+		t.Parallel()
+
+		st := state.State{Version: 1, SkillTargets: []string{"claude"}}
+		targets := resolveStoredTargets(st)
+
+		if len(targets) != 1 {
+			t.Fatalf("len(targets) = %d, want 1", len(targets))
+		}
+
+		if targets[0].ID != "claude" {
+			t.Fatalf("targets[0].ID = %q, want %q", targets[0].ID, "claude")
+		}
+	})
+
+	t.Run("falls back to all when stored IDs are invalid", func(t *testing.T) {
+		t.Parallel()
+
+		st := state.State{Version: 1, SkillTargets: []string{"nonexistent"}}
+		targets := resolveStoredTargets(st)
+
+		if len(targets) != len(skill.AllTargets()) {
+			t.Fatalf("len(targets) = %d, want %d (fallback to all)", len(targets), len(skill.AllTargets()))
+		}
+	})
+}
+
+func TestTargetIDs(t *testing.T) {
+	t.Parallel()
+
+	targets := skill.AllTargets()
+	ids := targetIDs(targets)
+
+	if len(ids) != len(targets) {
+		t.Fatalf("len(ids) = %d, want %d", len(ids), len(targets))
+	}
+
+	for i, target := range targets {
+		if ids[i] != target.ID {
+			t.Fatalf("ids[%d] = %q, want %q", i, ids[i], target.ID)
+		}
+	}
+}
+
 func TestRunSelfUpdateRejectsDevelopmentBuilds(t *testing.T) {
 	t.Parallel()
 

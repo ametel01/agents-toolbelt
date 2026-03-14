@@ -25,9 +25,10 @@ var (
 
 // State represents the persisted atb state file contents.
 type State struct {
-	Version   int                  `json:"version"`
-	Tools     map[string]ToolState `json:"tools"`
-	LastRunAt time.Time            `json:"last_run_at"`
+	Version      int                  `json:"version"`
+	Tools        map[string]ToolState `json:"tools"`
+	SkillTargets []string             `json:"skill_targets,omitempty"`
+	LastRunAt    time.Time            `json:"last_run_at"`
 }
 
 // ToolState records ownership and verification data for one tool.
