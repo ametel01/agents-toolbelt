@@ -133,6 +133,10 @@ func Update(ctx context.Context, opts Options) (Result, error) {
 
 func normalizeVersion(version string) (string, error) {
 	version = strings.TrimSpace(version)
+	if version != "" && version[0] != 'v' {
+		version = "v" + version
+	}
+
 	if !semver.IsValid(version) {
 		return "", fmt.Errorf("%w: %q", errInvalidVersion, version)
 	}

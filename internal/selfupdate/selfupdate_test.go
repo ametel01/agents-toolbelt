@@ -102,6 +102,92 @@ func TestUpdateNoopsWhenAlreadyCurrent(t *testing.T) {
 	}
 }
 
+func TestUpdateAcceptsCurrentVersionWithoutVPrefix(t *testing.T) {
+	t.Parallel()
+
+	archive := testArchive(t, "new-binary")
+	var baseURL string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/repos/test/atb/releases/latest":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"tag_name":"v0.2.0","assets":[{"name":"atb_linux_amd64.tar.gz","browser_download_url":"` + baseURL + `/downloads/atb_linux_amd64.tar.gz"}]}`))
+		case "/downloads/atb_linux_amd64.tar.gz":
+			_, _ = w.Write(archive)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+	baseURL = server.URL
+
+	executablePath := filepath.Join(t.TempDir(), "atb")
+	writeExecutableFixture(t, executablePath, "old-binary")
+
+	result, err := Update(context.Background(), Options{
+		BaseURL:        server.URL,
+		Client:         server.Client(),
+		CurrentVersion: "0.1.0",
+		ExecutablePath: executablePath,
+		GOARCH:         "amd64",
+		GOOS:           "linux",
+		Repo:           "test/atb",
+	})
+	if err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+
+	if !result.Updated {
+		t.Fatal("Update() did not mark the binary as updated")
+	}
+
+	if result.CurrentVersion != "v0.1.0" {
+		t.Fatalf("result.CurrentVersion = %q, want %q", result.CurrentVersion, "v0.1.0")
+	}
+}
+
+func TestUpdateAcceptsLatestVersionWithoutVPrefix(t *testing.T) {
+	t.Parallel()
+
+	var baseURL string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/repos/test/atb/releases/latest" {
+			http.NotFound(w, r)
+
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"tag_name":"0.1.0","assets":[{"name":"atb_linux_amd64.tar.gz","browser_download_url":"` + baseURL + `/downloads/atb_linux_amd64.tar.gz"}]}`))
+	}))
+	defer server.Close()
+	baseURL = server.URL
+
+	executablePath := filepath.Join(t.TempDir(), "atb")
+	writeExecutableFixture(t, executablePath, "current-binary")
+
+	result, err := Update(context.Background(), Options{
+		BaseURL:        server.URL,
+		Client:         server.Client(),
+		CurrentVersion: "v0.1.0",
+		ExecutablePath: executablePath,
+		GOARCH:         "amd64",
+		GOOS:           "linux",
+		Repo:           "test/atb",
+	})
+	if err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+
+	if result.Updated {
+		t.Fatal("Update() marked an up-to-date binary as updated")
+	}
+
+	if result.LatestVersion != "v0.1.0" {
+		t.Fatalf("result.LatestVersion = %q, want %q", result.LatestVersion, "v0.1.0")
+	}
+}
+
 func TestUpdateRejectsNonReleaseVersions(t *testing.T) {
 	t.Parallel()
 
