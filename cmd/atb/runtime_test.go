@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/iotest"
 	"time"
 
 	"github.com/ametel01/agents-toolbelt/internal/catalog"
@@ -367,7 +368,11 @@ func TestInstallDependenciesSucceedsWhenAllPass(t *testing.T) {
 	}
 }
 
-var errFakeInstall = errors.New("install failed")
+var (
+	errFakeInstall = errors.New("install failed")
+	errBrokenStdin = errors.New("broken stdin")
+	errWriteFailed = errors.New("write failed")
+)
 
 type failingManager struct{ name string }
 
@@ -431,4 +436,177 @@ func (f fakeRuntimeVerifier) Check(_ context.Context, tool catalog.Tool) (verify
 	}
 
 	return verify.VerifyResult{ToolID: tool.ID, Found: true, Verified: true, CheckedAt: time.Now().UTC()}, nil
+}
+
+// --- Regression tests: early state persistence (issue #23) ---
+
+func TestEarlySavePreservesReceiptsOnShellHookFailure(t *testing.T) {
+	homeDir := t.TempDir()
+	t.Setenv("HOME", homeDir)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(homeDir, ".config"))
+
+	st := state.State{
+		Version: 1,
+		Tools: map[string]state.ToolState{
+			"jq": {
+				ToolID:         "jq",
+				Bin:            "jq",
+				Ownership:      state.OwnershipManaged,
+				InstallManager: "brew",
+			},
+		},
+	}
+
+	// Simulate the early save that now runs after lifecycle execution.
+	if err := state.Save(st); err != nil {
+		t.Fatalf("early save: %v", err)
+	}
+
+	// Shell-hook prompting fails because the stdin reader is broken.
+	direnvTool := catalog.Tool{
+		ID:        "direnv",
+		Bin:       "direnv",
+		Name:      "direnv",
+		ShellHook: "required",
+	}
+
+	err := applyShellWorkflow(
+		iotest.ErrReader(errBrokenStdin),
+		io.Discard,
+		false,
+		&st,
+		[]catalog.Tool{direnvTool},
+	)
+	if err == nil {
+		t.Fatal("expected applyShellWorkflow to fail")
+	}
+
+	assertStateOnDiskContains(t, "jq")
+}
+
+func TestEarlySavePreservesReceiptsOnSkillOutputWriteFailure(t *testing.T) {
+	homeDir := t.TempDir()
+	t.Setenv("HOME", homeDir)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(homeDir, ".config"))
+	t.Setenv("PATH", t.TempDir())
+
+	registry := mustLoadRegistry(t)
+	st := state.State{
+		Version: 1,
+		Tools: map[string]state.ToolState{
+			"jq": {
+				ToolID:              "jq",
+				Bin:                 "jq",
+				Ownership:           state.OwnershipManaged,
+				InstallManager:      "brew",
+				LastUpdateAttemptAt: time.Now().UTC(),
+			},
+		},
+	}
+
+	// Simulate the early save that now runs after lifecycle execution.
+	if err := state.Save(st); err != nil {
+		t.Fatalf("early save: %v", err)
+	}
+
+	targets := []skill.Target{{
+		ID:      "test",
+		Name:    "Test",
+		RelPath: filepath.Join(".test", "SKILL.md"),
+	}}
+
+	// persistVerifiedSkill fails on the first stdout write, before its own
+	// internal state.Save call. The early save must protect the receipts.
+	err := persistVerifiedSkill(
+		context.Background(),
+		registry,
+		&st,
+		fakeRuntimeVerifier{},
+		failingWriter{},
+		targets,
+	)
+	if err == nil {
+		t.Fatal("expected persistVerifiedSkill to fail")
+	}
+
+	assertStateOnDiskContains(t, "jq")
+}
+
+func TestEarlySavePreservesRemovalsOnSkillOutputWriteFailure(t *testing.T) {
+	homeDir := t.TempDir()
+	t.Setenv("HOME", homeDir)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(homeDir, ".config"))
+	t.Setenv("PATH", t.TempDir())
+
+	registry := mustLoadRegistry(t)
+
+	// After uninstall the tool receipt has been removed from state.
+	st := state.State{
+		Version: 1,
+		Tools:   map[string]state.ToolState{},
+	}
+
+	// Simulate the early save that now runs after lifecycle execution.
+	if err := state.Save(st); err != nil {
+		t.Fatalf("early save: %v", err)
+	}
+
+	targets := []skill.Target{{
+		ID:      "test",
+		Name:    "Test",
+		RelPath: filepath.Join(".test", "SKILL.md"),
+	}}
+
+	err := persistVerifiedSkill(
+		context.Background(),
+		registry,
+		&st,
+		fakeRuntimeVerifier{},
+		failingWriter{},
+		targets,
+	)
+	if err == nil {
+		t.Fatal("expected persistVerifiedSkill to fail")
+	}
+
+	// The saved state must reflect the uninstall: jq must not be present.
+	statePath, pathErr := state.DefaultPath()
+	if pathErr != nil {
+		t.Fatalf("state.DefaultPath(): %v", pathErr)
+	}
+
+	//nolint:gosec // Test reads from a controlled temp directory.
+	saved, readErr := os.ReadFile(statePath)
+	if readErr != nil {
+		t.Fatalf("state file not written: %v", readErr)
+	}
+
+	if bytes.Contains(saved, []byte(`"jq"`)) {
+		t.Fatalf("saved state still contains jq after uninstall: %s", saved)
+	}
+}
+
+type failingWriter struct{}
+
+func (failingWriter) Write([]byte) (int, error) {
+	return 0, errWriteFailed
+}
+
+func assertStateOnDiskContains(t *testing.T, toolID string) {
+	t.Helper()
+
+	statePath, err := state.DefaultPath()
+	if err != nil {
+		t.Fatalf("state.DefaultPath(): %v", err)
+	}
+
+	//nolint:gosec // Test reads from a controlled temp directory.
+	saved, err := os.ReadFile(statePath)
+	if err != nil {
+		t.Fatalf("state file not written: %v", err)
+	}
+
+	if !bytes.Contains(saved, []byte(`"`+toolID+`"`)) {
+		t.Fatalf("saved state missing %s receipt: %s", toolID, saved)
+	}
 }

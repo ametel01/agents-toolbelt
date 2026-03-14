@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `confirmApply` now reads from an injected `io.Reader` instead of hardcoding `os.Stdin`, improving testability and enabling non-interactive integrations.
 
 ### Fixed
+- Lifecycle state is now saved immediately after install, update, and uninstall plan execution, before shell-hook prompting and skill generation, preventing receipt loss when post-processing steps fail.
 - The standalone installer now surfaces `mkdir -p` failures directly instead of suppressing the error and failing later with weaker diagnostics.
 - Stale version metadata is now cleared when binary verification detects a missing tool, preventing misleading version output for tools that are no longer installed.
 - `.golangci.yml` is now directly runnable with `golangci-lint run` by removing the obsolete `gosimple` linter entry (merged into `staticcheck` in v2) and the wrapper script workaround.
