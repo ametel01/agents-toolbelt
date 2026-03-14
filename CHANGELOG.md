@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `State.Tool()` now returns `(ToolState, bool)` by value instead of a pointer to a copy, making copy semantics explicit and eliminating a potential mutation footgun.
+- `confirmApply` now reads from an injected `io.Reader` instead of hardcoding `os.Stdin`, improving testability and enabling non-interactive integrations.
 
 ### Fixed
 - The standalone installer now surfaces `mkdir -p` failures directly instead of suppressing the error and failing later with weaker diagnostics.

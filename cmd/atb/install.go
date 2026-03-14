@@ -9,7 +9,7 @@ func newInstallCmd() *cobra.Command {
 		Use:   "install",
 		Short: "Install selected tools",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runInstall(cmd.Context(), cmd.OutOrStdout(), cmd.ErrOrStderr(), yes)
+			return runInstall(cmd.Context(), cmd.InOrStdin(), cmd.OutOrStdout(), cmd.ErrOrStderr(), yes)
 		},
 	}
 
