@@ -109,6 +109,20 @@ func runInstall(ctx context.Context, stdin io.Reader, stdout, stderr io.Writer, 
 		return wrapError("execute install plan", err)
 	}
 
+	if err := state.Save(installCtx.stateData); err != nil {
+		return wrapError("save state after install", err)
+	}
+
+	if err := postInstallWorkflow(ctx, stdin, stdout, yes, &installCtx); err != nil {
+		return err
+	}
+
+	renderSummary(stdout, "install", summary)
+
+	return nil
+}
+
+func postInstallWorkflow(ctx context.Context, stdin io.Reader, stdout io.Writer, yes bool, installCtx *installContext) error {
 	if err := applyShellWorkflow(stdin, stdout, yes, &installCtx.stateData, installCtx.selected); err != nil {
 		return wrapError("apply shell workflow", err)
 	}
@@ -122,13 +136,7 @@ func runInstall(ctx context.Context, stdin io.Reader, stdout, stderr io.Writer, 
 		return wrapError("select skill targets", err)
 	}
 
-	if err := finishInstall(ctx, stdout, &installCtx, targets); err != nil {
-		return err
-	}
-
-	renderSummary(stdout, "install", summary)
-
-	return nil
+	return finishInstall(ctx, stdout, installCtx, targets)
 }
 
 func bootstrapDependencies(ctx context.Context, stdout io.Writer, installCtx *installContext, yes bool) error {
@@ -369,6 +377,10 @@ func runToolUpdate(ctx context.Context, stdout, stderr io.Writer, toolID string)
 		return wrapError("execute update plan", err)
 	}
 
+	if err := state.Save(stateData); err != nil {
+		return wrapError("save state after update", err)
+	}
+
 	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, resolveStoredTargets(stateData)); err != nil {
 		return wrapError("persist verified skill", err)
 	}
@@ -415,6 +427,10 @@ func runUninstall(ctx context.Context, stdout, stderr io.Writer, toolIDs []strin
 	summary, err := plan.ExecuteUninstallPlan(ctx, withProgress(uninstallPlan, stdout), &stateData)
 	if err != nil {
 		return wrapError("execute uninstall plan", err)
+	}
+
+	if err := state.Save(stateData); err != nil {
+		return wrapError("save state after uninstall", err)
 	}
 
 	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, resolveStoredTargets(stateData)); err != nil {
