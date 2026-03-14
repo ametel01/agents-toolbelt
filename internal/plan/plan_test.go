@@ -221,6 +221,92 @@ func TestBuildUninstallPlanManagedTool(t *testing.T) {
 	}
 }
 
+func TestBuildUpdatePlanUnknownToolReturnsError(t *testing.T) {
+	t.Parallel()
+
+	snapshot := discovery.Snapshot{
+		Tools: map[string]discovery.ToolPresence{},
+	}
+
+	_, err := BuildUpdatePlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, "does-not-exist")
+	if err == nil {
+		t.Fatal("BuildUpdatePlan() expected error for unknown tool, got nil")
+	}
+}
+
+func TestBuildUpdatePlanMatchesByBinaryName(t *testing.T) {
+	t.Parallel()
+
+	registry := mustLoadRegistry(t)
+	tool := mustTool(t, registry, "difftastic") // bin = "difft"
+
+	snapshot := discovery.Snapshot{
+		Tools: map[string]discovery.ToolPresence{
+			"difftastic": {
+				Tool:      tool,
+				Ownership: state.OwnershipManaged,
+				Receipt: &state.ToolState{
+					ToolID:         "difftastic",
+					Ownership:      state.OwnershipManaged,
+					InstallManager: "brew",
+				},
+			},
+		},
+	}
+
+	plan, err := BuildUpdatePlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, "difft")
+	if err != nil {
+		t.Fatalf("BuildUpdatePlan() error = %v", err)
+	}
+
+	if len(plan.Actions) != 1 || plan.Actions[0].Tool.ID != "difftastic" {
+		t.Fatalf("expected 1 action for difftastic, got %d actions", len(plan.Actions))
+	}
+}
+
+func TestBuildUninstallPlanUnknownToolReturnsError(t *testing.T) {
+	t.Parallel()
+
+	snapshot := discovery.Snapshot{
+		Tools: map[string]discovery.ToolPresence{},
+	}
+
+	_, err := BuildUninstallPlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, []string{"does-not-exist"}, false)
+	if err == nil {
+		t.Fatal("BuildUninstallPlan() expected error for unknown tool, got nil")
+	}
+}
+
+func TestBuildUninstallPlanMatchesByBinaryName(t *testing.T) {
+	t.Parallel()
+
+	registry := mustLoadRegistry(t)
+	tool := mustTool(t, registry, "difftastic") // bin = "difft"
+
+	snapshot := discovery.Snapshot{
+		Tools: map[string]discovery.ToolPresence{
+			"difftastic": {
+				Tool:      tool,
+				Ownership: state.OwnershipManaged,
+				Receipt: &state.ToolState{
+					ToolID:         "difftastic",
+					Ownership:      state.OwnershipManaged,
+					InstallManager: "brew",
+				},
+			},
+		},
+	}
+
+	plan, err := BuildUninstallPlan(snapshot, []pkgmgr.Manager{fakeManager{name: "brew"}}, []string{"difft"}, false)
+	if err != nil {
+		t.Fatalf("BuildUninstallPlan() error = %v", err)
+	}
+
+	if len(plan.Actions) != 1 || plan.Actions[0].Tool.ID != "difftastic" {
+		t.Fatalf("expected 1 uninstall action for difftastic, got %d actions", len(plan.Actions))
+	}
+}
+
 func mustLoadRegistry(t *testing.T) catalog.Registry {
 	t.Helper()
 

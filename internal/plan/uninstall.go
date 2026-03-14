@@ -2,6 +2,7 @@ package plan
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/ametel01/agents-toolbelt/internal/catalog"
@@ -23,9 +24,17 @@ func BuildUninstallPlan(
 		return Plan{}, errUninstallTargetsRequired
 	}
 
+	if !uninstallAll {
+		for _, id := range toolIDs {
+			if _, ok := resolveSelector(snapshot, id); !ok {
+				return Plan{}, fmt.Errorf("unknown tool %q", id)
+			}
+		}
+	}
+
 	actions := make([]Action, 0, len(snapshot.Tools))
 	for _, presence := range snapshot.Tools {
-		if !uninstallAll && !slices.Contains(toolIDs, presence.Tool.ID) {
+		if !uninstallAll && !matchesSelector(presence, toolIDs) {
 			continue
 		}
 
@@ -79,8 +88,34 @@ func methodForReceipt(tool catalog.Tool, installManager string, managers []pkgmg
 	return catalog.InstallMethod{}, nil, false
 }
 
-func shouldPlanTool(candidate, requested string) bool {
-	return requested == "" || candidate == requested
+// resolveSelector checks whether selector matches any tool in the snapshot by
+// ID or binary name, returning the canonical tool ID.
+func resolveSelector(snapshot discovery.Snapshot, selector string) (string, bool) {
+	if _, ok := snapshot.Tools[selector]; ok {
+		return selector, true
+	}
+
+	for _, presence := range snapshot.Tools {
+		if presence.Tool.Bin == selector {
+			return presence.Tool.ID, true
+		}
+	}
+
+	return "", false
+}
+
+func shouldPlanTool(presence discovery.ToolPresence, requested string) bool {
+	return requested == "" || presence.Tool.ID == requested || presence.Tool.Bin == requested
+}
+
+func matchesSelector(presence discovery.ToolPresence, selectors []string) bool {
+	for _, sel := range selectors {
+		if presence.Tool.ID == sel || presence.Tool.Bin == sel {
+			return true
+		}
+	}
+
+	return false
 }
 
 func sortActions(actions []Action) {

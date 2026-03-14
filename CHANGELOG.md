@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Install state (receipts and shell-hook decisions) is now persisted even when the skill-target picker is canceled or errors, preventing silent data loss after successful installs.
+- `update tools <name>` and `uninstall <name>` now return an error when the requested tool does not exist in the catalog, instead of silently succeeding with an empty plan.
+- Tool selectors now accept both the catalog tool ID and the binary name (e.g., `difft` resolves to `difftastic`).
 
 ## [0.3.1] - 2026-03-14
 
