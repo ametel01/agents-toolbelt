@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `atb update` now verifies the SHA256 checksum of the downloaded archive before replacing the current binary, failing closed on mismatch.
 
 ### Changed
+- Verification tool versions (`staticcheck`, `golangci-lint`, `govulncheck`) are now pinned in the Makefile and shared by CI, replacing `@latest` installs for reproducible builds.
 - `State.Tool()` now returns `(ToolState, bool)` by value instead of a pointer to a copy, making copy semantics explicit and eliminating a potential mutation footgun.
 - `confirmApply` now reads from an injected `io.Reader` instead of hardcoding `os.Stdin`, improving testability and enabling non-interactive integrations.
 
