@@ -171,6 +171,10 @@ func TestFinishInstallPersistsStateWhenTargetsCanceled(t *testing.T) {
 	if !bytes.Contains(saved, []byte(`"applied"`)) {
 		t.Fatalf("saved state missing shell hook status: %s", saved)
 	}
+
+	if !bytes.Contains(saved, []byte(`"none"`)) {
+		t.Fatalf("saved state missing skill opt-out sentinel: %s", saved)
+	}
 }
 
 func TestFinishInstallPersistsStateWithNormalTargets(t *testing.T) {
@@ -289,6 +293,17 @@ func TestResolveStoredTargets(t *testing.T) {
 
 		if len(targets) != len(skill.AllTargets()) {
 			t.Fatalf("len(targets) = %d, want %d (fallback to all)", len(targets), len(skill.AllTargets()))
+		}
+	})
+
+	t.Run("returns nil when skill generation is opted out", func(t *testing.T) {
+		t.Parallel()
+
+		st := state.State{Version: 1, SkillTargets: []string{skillOptOut}}
+		targets := resolveStoredTargets(st)
+
+		if targets != nil {
+			t.Fatalf("targets = %v, want nil for opt-out", targets)
 		}
 	})
 }

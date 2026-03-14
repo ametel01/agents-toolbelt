@@ -26,6 +26,8 @@ import (
 	"github.com/ametel01/agents-toolbelt/internal/verify"
 )
 
+const skillOptOut = "none"
+
 var (
 	errDependencyBootstrapFailed  = errors.New("dependency bootstrap failed")
 	errNoSupportedPackageManagers = errors.New("no supported package managers detected")
@@ -160,6 +162,8 @@ func bootstrapDependencies(ctx context.Context, stdout io.Writer, installCtx *in
 
 func finishInstall(ctx context.Context, stdout io.Writer, installCtx *installContext, targets []skill.Target) error {
 	if len(targets) == 0 {
+		installCtx.stateData.SkillTargets = []string{skillOptOut}
+
 		if err := state.Save(installCtx.stateData); err != nil {
 			return wrapError("save state", err)
 		}
@@ -381,8 +385,10 @@ func runToolUpdate(ctx context.Context, stdout, stderr io.Writer, toolID string)
 		return wrapError("save state after update", err)
 	}
 
-	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, resolveStoredTargets(stateData)); err != nil {
-		return wrapError("persist verified skill", err)
+	if targets := resolveStoredTargets(stateData); len(targets) > 0 {
+		if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, targets); err != nil {
+			return wrapError("persist verified skill", err)
+		}
 	}
 
 	renderSummary(stdout, "update", summary)
@@ -433,8 +439,10 @@ func runUninstall(ctx context.Context, stdout, stderr io.Writer, toolIDs []strin
 		return wrapError("save state after uninstall", err)
 	}
 
-	if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, resolveStoredTargets(stateData)); err != nil {
-		return wrapError("persist verified skill", err)
+	if targets := resolveStoredTargets(stateData); len(targets) > 0 {
+		if err := persistVerifiedSkill(ctx, registry, &stateData, liveVerifier{}, stdout, targets); err != nil {
+			return wrapError("persist verified skill", err)
+		}
 	}
 
 	renderSummary(stdout, "uninstall", summary)
@@ -556,6 +564,10 @@ func selectDependencies(selected []catalog.Tool, managers []pkgmgr.Manager, yes 
 }
 
 func resolveStoredTargets(st state.State) []skill.Target {
+	if len(st.SkillTargets) == 1 && st.SkillTargets[0] == skillOptOut {
+		return nil
+	}
+
 	if len(st.SkillTargets) == 0 {
 		return skill.AllTargets()
 	}
