@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Shell-hook detection now matches exact uncommented lines instead of any substring, preventing commented-out hooks from blocking real hook installation.
 - Dependency bootstrap failures now stop the install flow instead of being logged and silently ignored, preventing confusing downstream tool-install failures when a required prerequisite is missing.
 - Install state (receipts and shell-hook decisions) is now persisted even when the skill-target picker is canceled or errors, preventing silent data loss after successful installs.
 - `update tools <name>` and `uninstall <name>` now return an error when the requested tool does not exist in the catalog, instead of silently succeeding with an empty plan.
