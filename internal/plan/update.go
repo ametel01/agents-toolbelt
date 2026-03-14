@@ -10,10 +10,8 @@ import (
 
 // BuildUpdatePlan creates an update plan for atb-managed tools.
 func BuildUpdatePlan(snapshot discovery.Snapshot, managers []pkgmgr.Manager, toolID string) (Plan, error) {
-	if toolID != "" {
-		if _, ok := resolveSelector(snapshot, toolID); !ok {
-			return Plan{}, fmt.Errorf("unknown tool %q", toolID)
-		}
+	if toolID != "" && !resolveSelector(snapshot, toolID) {
+		return Plan{}, fmt.Errorf("%w: %s", errUnknownTool, toolID)
 	}
 
 	actions := make([]Action, 0, len(snapshot.Tools))

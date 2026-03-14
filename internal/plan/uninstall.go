@@ -11,7 +11,10 @@ import (
 	"github.com/ametel01/agents-toolbelt/internal/state"
 )
 
-var errUninstallTargetsRequired = errors.New("provide at least one tool or use --all")
+var (
+	errUninstallTargetsRequired = errors.New("provide at least one tool or use --all")
+	errUnknownTool              = errors.New("unknown tool")
+)
 
 // BuildUninstallPlan creates an uninstall plan for managed tools only.
 func BuildUninstallPlan(
@@ -26,8 +29,8 @@ func BuildUninstallPlan(
 
 	if !uninstallAll {
 		for _, id := range toolIDs {
-			if _, ok := resolveSelector(snapshot, id); !ok {
-				return Plan{}, fmt.Errorf("unknown tool %q", id)
+			if !resolveSelector(snapshot, id) {
+				return Plan{}, fmt.Errorf("%w: %s", errUnknownTool, id)
 			}
 		}
 	}
@@ -89,19 +92,19 @@ func methodForReceipt(tool catalog.Tool, installManager string, managers []pkgmg
 }
 
 // resolveSelector checks whether selector matches any tool in the snapshot by
-// ID or binary name, returning the canonical tool ID.
-func resolveSelector(snapshot discovery.Snapshot, selector string) (string, bool) {
+// ID or binary name.
+func resolveSelector(snapshot discovery.Snapshot, selector string) bool {
 	if _, ok := snapshot.Tools[selector]; ok {
-		return selector, true
+		return true
 	}
 
 	for _, presence := range snapshot.Tools {
 		if presence.Tool.Bin == selector {
-			return presence.Tool.ID, true
+			return true
 		}
 	}
 
-	return "", false
+	return false
 }
 
 func shouldPlanTool(presence discovery.ToolPresence, requested string) bool {
