@@ -78,6 +78,48 @@ func TestRefreshVerifiedToolsIncludesExternalTools(t *testing.T) {
 	}
 }
 
+func TestRefreshVerifiedToolsClearsVersionForMissingBinary(t *testing.T) {
+	registry := mustLoadRegistry(t)
+	// Empty PATH so jq won't be found.
+	t.Setenv("PATH", t.TempDir())
+
+	st := state.State{
+		Version: 1,
+		Tools: map[string]state.ToolState{
+			"jq": {
+				ToolID:         "jq",
+				Bin:            "jq",
+				Ownership:      state.OwnershipManaged,
+				InstallManager: "brew",
+				BinaryPath:     "/usr/local/bin/jq",
+				Version:        "1.7.1",
+			},
+		},
+	}
+
+	_, err := refreshVerifiedTools(context.Background(), registry, &st, fakeRuntimeVerifier{})
+	if err != nil {
+		t.Fatalf("refreshVerifiedTools() error = %v", err)
+	}
+
+	receipt, ok := st.Tool("jq")
+	if !ok {
+		t.Fatal("state.Tool(\"jq\") not found")
+	}
+
+	if receipt.BinaryPath != "" {
+		t.Fatalf("receipt.BinaryPath = %q, want empty", receipt.BinaryPath)
+	}
+
+	if receipt.Version != "" {
+		t.Fatalf("receipt.Version = %q, want empty", receipt.Version)
+	}
+
+	if receipt.LastVerifyOK {
+		t.Fatal("receipt.LastVerifyOK = true, want false")
+	}
+}
+
 func TestFinishInstallPersistsStateWhenTargetsCanceled(t *testing.T) {
 	homeDir := t.TempDir()
 	t.Setenv("HOME", homeDir)

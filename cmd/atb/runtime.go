@@ -651,6 +651,7 @@ func refreshVerifiedTools(
 			if presence.Receipt != nil {
 				receipt := *presence.Receipt
 				receipt.BinaryPath = ""
+				receipt.Version = ""
 				receipt.LastVerifyAt = time.Now().UTC()
 				receipt.LastVerifyOK = false
 				receipt.LastVerifyError = "binary not found"

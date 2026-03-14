@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Stale version metadata is now cleared when binary verification detects a missing tool, preventing misleading version output for tools that are no longer installed.
 - `.golangci.yml` is now directly runnable with `golangci-lint run` by removing the obsolete `gosimple` linter entry (merged into `staticcheck` in v2) and the wrapper script workaround.
 - Update and uninstall now reuse the skill targets selected during install instead of always regenerating for all targets, preventing skill files from appearing in agent directories the user never opted into.
 - Managed update and uninstall now prefer lifecycle commands stored in install receipts instead of always re-selecting from the current catalog, preventing breakage when the catalog changes after install.
