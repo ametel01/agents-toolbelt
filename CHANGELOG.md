@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- The standalone installer now surfaces `mkdir -p` failures directly instead of suppressing the error and failing later with weaker diagnostics.
 - Stale version metadata is now cleared when binary verification detects a missing tool, preventing misleading version output for tools that are no longer installed.
 - `.golangci.yml` is now directly runnable with `golangci-lint run` by removing the obsolete `gosimple` linter entry (merged into `staticcheck` in v2) and the wrapper script workaround.
 - Update and uninstall now reuse the skill targets selected during install instead of always regenerating for all targets, preventing skill files from appearing in agent directories the user never opted into.
